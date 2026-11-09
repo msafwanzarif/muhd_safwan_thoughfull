@@ -34,7 +34,7 @@ Working hours and slots (step 4):
 - Members use GET /api/v1/professionals/:professionalId/slots. Responses include UTC start/end strings and both timezones. Slots run for 50 minutes with 10 minutes between professional sessions. Booked professional slots are omitted; overlaps with the current member's sessions are returned as unavailable with MEMBER_OVERLAP. No other member's identity is returned.
 - Minimum notice is two hours, inclusive. The calendar window includes today through today + 28 days in the member's timezone; a session must finish before the next local midnight. Blocked professional-local dates are excluded. Nonexistent daylight-saving start times are skipped; repeated times use the earlier occurrence. Slots are generated on request.
 
-Timezone changes and blocked-date editing endpoints remain scheduled for step 10.
+Timezone changes and blocked-date editing endpoints are available (step 10).
 
 Booking creation (step 5): POST /api/v1/sessions with professionalId and startAt (ISO UTC ending in Z), plus Idempotency-Key. Only members can book; their identity is read from the session. The API regenerates slots in the booking transaction and returns 409 SLOT_TAKEN for unavailable slots. PostgreSQL exclusion constraints remain the final safeguard against professional or member overlaps.
 
@@ -55,3 +55,7 @@ Notification endpoints: GET /api/v1/notifications (limit and cursor), GET /api/v
 Professional directory (step 9): GET /api/v1/professionals accepts page, pageSize, name (case-insensitive literal substring), specialisation, language and date (YYYY-MM-DD in the member's timezone). Members only. Responses include public profile details and hasWorkingHours; professionals without working hours remain visible without a date filter. Emails and account secrets are excluded.
 
 Date filtering uses SQL to narrow profile matches and relevant professional-local weekdays, then batch-loads hours, active sessions and blocked dates. It generates slots for the shortlist and paginates matching professionals in memory. This is suitable for the demo; large directories should move date availability filtering/pagination into a dedicated indexed availability model. Invalid calendar dates return 400; dates outside the booking window return an empty page.
+
+Extras (step 10): professionals can GET/PUT /api/v1/blocked-dates and DELETE /api/v1/blocked-dates/:id. Blocking a local date keeps existing sessions and returns them as warnings. PATCH /api/v1/users/me/timezone changes the authenticated account timezone; professionals must supply their complete replacement ranges in the new timezone (an empty array clears availability). Members omit ranges. UTC booking times and blocked calendar dates do not move.
+
+Working ranges use whole-hour lengths, quarter-hour starts, and must finish by midnight. Timezone changes do not convert or split ranges.

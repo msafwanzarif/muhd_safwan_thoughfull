@@ -1,3 +1,4 @@
+import { UsersModule } from '../src/users/users.module';
 import { ProfessionalsModule } from '../src/professionals/professionals.module';
 import 'reflect-metadata';
 import { it, expect } from 'vitest';
@@ -38,6 +39,7 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
       AvailabilityModule,
       SlotsModule,
       ProfessionalsModule,
+      UsersModule,
     ],
   }).compile();
   const app = module.createNestApplication();
@@ -267,6 +269,112 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
       .set('Authorization', 'Bearer ' + memberToken)
       .expect(200);
     expect(empty.body.slots).toEqual([]);
+    const blocked = await api
+      .put('/api/v1/blocked-dates')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ localDate: start.toISODate(), reason: 'Holiday' })
+      .expect(200);
+    expect(blocked.body.warnings).toHaveLength(1);
+    await api
+      .put('/api/v1/blocked-dates')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ localDate: start.toISODate() })
+      .expect(403);
+    await api
+      .put('/api/v1/blocked-dates')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ localDate: '2027-02-30' })
+      .expect(400);
+    expect(
+      (
+        await api
+          .get('/api/v1/blocked-dates')
+          .set('Authorization', 'Bearer ' + proToken)
+          .expect(200)
+      ).body.items,
+    ).toHaveLength(1);
+    await api
+      .put('/api/v1/working-hours')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ ranges: [{ weekday: 0, startMinute: 1080, lengthHours: 2 }] })
+      .expect(200);
+    const utcBefore = (
+      await database.pool.query('SELECT start_at FROM booking_sessions')
+    ).rows[0].start_at;
+    await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ timezone: 'Asia/Kathmandu' })
+      .expect(400);
+    expect(
+      (
+        await api
+          .get('/api/v1/auth/me')
+          .set('Authorization', 'Bearer ' + proToken)
+      ).body.timezone,
+    ).toBe('UTC');
+    await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({
+        timezone: 'Asia/Kathmandu',
+        ranges: [{ weekday: 0, startMinute: 1425, lengthHours: 2 }],
+      })
+      .expect(400);
+    const replacement = [{ weekday: 1, startMinute: 540, lengthHours: 2 }];
+    const changed = await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ timezone: 'Asia/Kathmandu', ranges: replacement })
+      .expect(200);
+    expect(changed.body.ranges).toEqual(replacement);
+    expect(
+      (await database.pool.query('SELECT start_at FROM booking_sessions'))
+        .rows[0].start_at,
+    ).toEqual(utcBefore);
+    expect(
+      (
+        await api
+          .get('/api/v1/blocked-dates')
+          .set('Authorization', 'Bearer ' + proToken)
+      ).body.items[0].localDate,
+    ).toBe(start.toISODate());
+    expect(
+      (
+        await api
+          .get('/api/v1/auth/me')
+          .set('Authorization', 'Bearer ' + proToken)
+      ).body.timezone,
+    ).toBe('Asia/Kathmandu');
+    await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({
+        timezone: 'UTC',
+        ranges: [{ weekday: 1, startMinute: 540, lengthHours: 2 }],
+      })
+      .expect(200);
+    await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ timezone: 'Asia/Kathmandu', ranges: [] })
+      .expect(400);
+    await api
+      .patch('/api/v1/users/me/timezone')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ timezone: 'Asia/Kathmandu' })
+      .expect(200);
+    expect(
+      (
+        await api
+          .get('/api/v1/auth/me')
+          .set('Authorization', 'Bearer ' + memberToken)
+      ).body.timezone,
+    ).toBe('Asia/Kathmandu');
+    await api
+      .delete('/api/v1/blocked-dates/' + blocked.body.id)
+      .set('Authorization', 'Bearer ' + proToken)
+      .expect(204);
   } finally {
     await app.close();
     await pg.stop();

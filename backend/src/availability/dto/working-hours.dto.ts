@@ -52,7 +52,8 @@ export class AffectedSessionDto {
 export class WorkingHoursResponseDto {
   @ApiProperty() timezone!: string;
 
-  @ApiProperty({ type: [WorkingRangeDto] }) ranges!: WorkingRangeDto[];
+  @ApiProperty({ type: [WorkingRangeDto] })
+  ranges!: WorkingRangeDto[];
 }
 
 export class SaveWorkingHoursResponseDto extends WorkingHoursResponseDto {

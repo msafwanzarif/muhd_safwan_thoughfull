@@ -1,10 +1,10 @@
+import { sessionWithinHours } from './domain/session-within-hours';
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import { and, eq, gt, sql } from 'drizzle-orm';
-import { DateTime } from 'luxon';
 import { DatabaseService } from '../database/database.module';
 import { users, workingHours, bookingSessions } from '../database/schema';
 import { validateWorkingHours } from './domain/working-hours';
@@ -87,24 +87,15 @@ export class AvailabilityService {
           ),
         );
       const warnings = existing
-        .filter((session) => {
-          const start = DateTime.fromJSDate(session.startAt, {
-            zone: user.timezone,
-          });
-          const end = DateTime.fromJSDate(session.endAt, {
-            zone: user.timezone,
-          });
-          const minute = start.hour * 60 + start.minute;
-
-          return !dto.ranges.some(
-            (r) =>
-              r.weekday === start.weekday % 7 &&
-              minute >= r.startMinute &&
-              (minute - r.startMinute) % 60 === 0 &&
-              start.toISODate() === end.toISODate() &&
-              end.hour * 60 + end.minute <= r.startMinute + r.lengthHours * 60,
-          );
-        })
+        .filter(
+          (session) =>
+            !sessionWithinHours(
+              session.startAt,
+              session.endAt,
+              user.timezone,
+              dto.ranges,
+            ),
+        )
         .map((session) => ({
           id: session.id,
           startAt: session.startAt.toISOString(),
