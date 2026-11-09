@@ -7,5 +7,6 @@ import { SlotsService } from './slots.service';
   imports: [AuthModule],
   controllers: [SlotsController],
   providers: [SlotsService],
+  exports: [SlotsService],
 })
 export class SlotsModule {}

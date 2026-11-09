@@ -35,3 +35,7 @@ Working hours and slots (step 4):
 - Minimum notice is two hours, inclusive. The calendar window includes today through today + 28 days in the member's timezone; a session must finish before the next local midnight. Blocked professional-local dates are excluded. Nonexistent daylight-saving start times are skipped; repeated times use the earlier occurrence. Slots are generated on request.
 
 Timezone changes and blocked-date editing endpoints remain scheduled for step 10.
+
+Booking creation (step 5): POST /api/v1/sessions with professionalId and startAt (ISO UTC ending in Z), plus Idempotency-Key. Only members can book; their identity is read from the session. The API regenerates slots in the booking transaction and returns 409 SLOT_TAKEN for unavailable slots. PostgreSQL exclusion constraints remain the final safeguard against professional or member overlaps.
+
+Booking keys are scoped per member for 24 hours. Identical retries replay the original status/body; different payloads return 422. A committed in-progress claim coordinates retries without holding a lock while polling (100 ms, up to 10 seconds). Claims abandoned for 30 seconds can be recovered. The booking and completed response commit atomically; deterministic client errors are cached too.

@@ -55,7 +55,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         title: titles[status] ?? 'Request failed',
         status,
         detail,
-        code: codes[status] ?? 'REQUEST_FAILED',
+        code:
+          payload &&
+          typeof payload === 'object' &&
+          'code' in payload &&
+          typeof payload.code === 'string'
+            ? payload.code
+            : (codes[status] ?? 'REQUEST_FAILED'),
       });
   }
 }

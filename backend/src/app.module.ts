@@ -1,3 +1,4 @@
+import { BookingsModule } from './bookings/bookings.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { SlotsModule } from './slots/slots.module';
 import { ApiResponse } from '@nestjs/swagger';
@@ -23,6 +24,7 @@ class HealthController {
     AuthModule,
     AvailabilityModule,
     SlotsModule,
+    BookingsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../.env', '.env'],

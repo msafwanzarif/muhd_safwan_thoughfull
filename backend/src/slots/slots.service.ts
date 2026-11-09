@@ -1,3 +1,4 @@
+import type { DatabaseTransaction } from '../common/idempotency/idempotency.service';
 import {
   ForbiddenException,
   Injectable,
@@ -22,11 +23,12 @@ export class SlotsService {
   async list(
     professionalId: string,
     member: SessionUser,
+    transaction?: DatabaseTransaction,
   ): Promise<SlotsResponseDto> {
     if (member.role !== 'member') {
       throw new ForbiddenException('Only members can browse booking slots');
     }
-    const db = this.database.db;
+    const db = transaction ?? this.database.db;
     const [professional] = await db
       .select()
       .from(users)
@@ -36,16 +38,18 @@ export class SlotsService {
     }
     const now = new Date(),
       end = bookingWindowEnd(now, member.timezone).toJSDate();
-    const [ranges, blocked, professionalSessions, memberSessions] =
-      await Promise.all([
+    const queries = [
+      () =>
         db
           .select()
           .from(workingHours)
           .where(eq(workingHours.professionalId, professionalId)),
+      () =>
         db
           .select({ date: blockedDates.localDate })
           .from(blockedDates)
           .where(eq(blockedDates.professionalId, professionalId)),
+      () =>
         db
           .select({
             startAt: bookingSessions.startAt,
@@ -60,6 +64,7 @@ export class SlotsService {
               lt(bookingSessions.startAt, end),
             ),
           ),
+      () =>
         db
           .select({
             startAt: bookingSessions.startAt,
@@ -74,7 +79,21 @@ export class SlotsService {
               lt(bookingSessions.startAt, end),
             ),
           ),
-      ]);
+    ] as const;
+    // A transaction uses a single pg client, so issue its reads sequentially.
+    const [ranges, blocked, professionalSessions, memberSessions] = transaction
+      ? [
+          await queries[0](),
+          await queries[1](),
+          await queries[2](),
+          await queries[3](),
+        ]
+      : await Promise.all([
+          queries[0](),
+          queries[1](),
+          queries[2](),
+          queries[3](),
+        ]);
 
     return {
       professionalId,
