@@ -27,3 +27,11 @@ Sign-up requires an Idempotency-Key header (16–128 letters, digits, underscore
 After code changes, run `sh docker-update.sh` (Git Bash, WSL or a Unix shell). It rebuilds and starts containers, applies migrations, then follows API logs. Ctrl+C stops viewing logs while containers keep running. The script stops if rebuilding or migrations fail.
 
 Set API_ORIGIN to the exact origin hosting Swagger (default http://localhost:3000). Swagger requests from that origin receive Bearer tokens on login. FRONTEND_ORIGIN continues to use cookies; cookie writes still require FRONTEND_ORIGIN. Browsers set Origin automatically; the Swagger header field cannot override it.
+
+Working hours and slots (step 4):
+
+- Professionals use GET and PUT /api/v1/working-hours. PUT replaces the whole week with a ranges array: weekday (Sunday = 0), startMinute (minutes after local midnight, in steps of 15), and lengthHours (positive whole hours). Empty ranges clears availability. Overlaps and midnight-crossing ranges are rejected. Existing future bookings outside the new hours are retained and listed in warnings.
+- Members use GET /api/v1/professionals/:professionalId/slots. Responses include UTC start/end strings and both timezones. Slots run for 50 minutes with 10 minutes between professional sessions. Booked professional slots are omitted; overlaps with the current member's sessions are returned as unavailable with MEMBER_OVERLAP. No other member's identity is returned.
+- Minimum notice is two hours, inclusive. The calendar window includes today through today + 28 days in the member's timezone; a session must finish before the next local midnight. Blocked professional-local dates are excluded. Nonexistent daylight-saving start times are skipped; repeated times use the earlier occurrence. Slots are generated on request.
+
+Timezone changes and blocked-date editing endpoints remain scheduled for step 10.

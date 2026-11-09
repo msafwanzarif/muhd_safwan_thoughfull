@@ -1,3 +1,5 @@
+import { AvailabilityModule } from './availability/availability.module';
+import { SlotsModule } from './slots/slots.module';
 import { ApiResponse } from '@nestjs/swagger';
 import { HealthResponseDto } from './common/dto/health-response.dto';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +21,8 @@ class HealthController {
   imports: [
     DatabaseModule,
     AuthModule,
+    AvailabilityModule,
+    SlotsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../.env', '.env'],

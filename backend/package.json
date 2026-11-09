@@ -24,6 +24,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^18.0.10",
     "drizzle-orm": "^0.45.4",
+    "luxon": "^3.7.2",
     "pg": "^8",
     "reflect-metadata": "^0.2",
     "rxjs": "^7"
@@ -35,6 +36,7 @@
     "@testcontainers/postgresql": "^12.2.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "@types/luxon": "^3.7.6",
     "@types/node": "^26.6.6",
     "@types/pg": "^8",
     "@types/supertest": "^7.2.1",
