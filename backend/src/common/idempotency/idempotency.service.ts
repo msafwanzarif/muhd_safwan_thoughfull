@@ -24,6 +24,7 @@ export class IdempotencyService {
     key: string,
     payload: string,
     work: (tx: DatabaseTransaction) => Promise<T>,
+    successStatus = 201,
   ): Promise<T> {
     if (!/^[A-Za-z0-9_-]{16,128}$/.test(key ?? '')) {
       throw new BadRequestException(
@@ -110,7 +111,7 @@ export class IdempotencyService {
                 'Request ownership changed; retry with the same key',
               );
             }
-            let responseStatus = 201;
+            let responseStatus = successStatus;
             let result: object;
             try {
               // Savepoint lets deterministic client errors be cached after work rolls back.

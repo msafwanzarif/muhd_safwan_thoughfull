@@ -302,6 +302,132 @@ it('books real slots exactly once and rejects concurrent professional/member ove
       .expect(200);
     expect(cancelled.body.total).toBe(1);
     expect(cancelled.body.items[0].id).toBe(pair[0].body.id);
+    // Step 7: cancellation, reschedule atomicity and participant rules.
+    const future = start.plus({ days: 3 });
+    await database.pool.query(
+      'INSERT INTO working_hours (professional_id,weekday,start_minute,length_hours,created_by,updated_by) VALUES ($1,$2,540,8,$1,$1)',
+      [accounts[2].id, future.weekday % 7],
+    );
+    const original = await bookings.create(
+      identities[0],
+      { professionalId: accounts[2].id, startAt: future.toISO()! },
+      'reschedule-original-key',
+    );
+    const reschedulePath = '/api/v1/sessions/' + original.id + '/reschedule';
+    const failed = await api
+      .post(reschedulePath)
+      .set('Authorization', 'Bearer ' + token)
+      .set('Idempotency-Key', 'reschedule-invalid-key')
+      .send({ startAt: future.plus({ minutes: 15 }).toISO() })
+      .expect(409);
+    expect(failed.body.code).toBe('SLOT_TAKEN');
+    expect(
+      (
+        await database.pool.query(
+          'SELECT status FROM booking_sessions WHERE id=$1',
+          [original.id],
+        )
+      ).rows[0].status,
+    ).toBe('active');
+    await api
+      .post(reschedulePath)
+      .set('Authorization', 'Bearer ' + otherToken)
+      .set('Idempotency-Key', 'reschedule-stranger-key')
+      .send({ startAt: future.plus({ hours: 1 }).toISO() })
+      .expect(404);
+    const move = () =>
+      api
+        .post(reschedulePath)
+        .set('Authorization', 'Bearer ' + token)
+        .set('Idempotency-Key', 'reschedule-success-key')
+        .send({ startAt: future.plus({ hours: 1 }).toISO() });
+    const moved = await move().expect(200);
+    expect((await move().expect(200)).body).toEqual(moved.body);
+    expect(
+      (
+        await database.pool.query(
+          'SELECT status FROM booking_sessions WHERE id=$1',
+          [original.id],
+        )
+      ).rows[0].status,
+    ).toBe('rescheduled');
+    expect(
+      (
+        await database.pool.query(
+          'SELECT rescheduled_from_id FROM booking_sessions WHERE id=$1',
+          [moved.body.session.id],
+        )
+      ).rows[0].rescheduled_from_id,
+    ).toBe(original.id);
+    // A rescheduled range is free again.
+    await bookings.create(
+      identities[1],
+      { professionalId: accounts[2].id, startAt: future.toISO()! },
+      'freed-original-slot-key',
+    );
+    const cancelPath = '/api/v1/sessions/' + moved.body.session.id + '/cancel';
+    await api
+      .post(cancelPath)
+      .set('Authorization', 'Bearer ' + otherToken)
+      .set('Idempotency-Key', 'cancel-stranger-key')
+      .send({})
+      .expect(404);
+    const cancel = () =>
+      api
+        .post(cancelPath)
+        .set('Authorization', 'Bearer ' + token)
+        .set('Idempotency-Key', 'cancel-success-key')
+        .send({ reason: 'Plans changed' });
+    const cancelledResult = await cancel().expect(200);
+    expect(cancelledResult.body.status).toBe('cancelled');
+    expect((await cancel().expect(200)).body).toEqual(cancelledResult.body);
+    expect(cancelledResult.body.reason).toBe('Plans changed');
+    const nearStart = DateTime.utc().plus({ hours: 1 });
+    const near = (
+      await database.pool.query(
+        'INSERT INTO booking_sessions (member_id,professional_id,start_at,end_at,created_by,updated_by) VALUES ($1,$2,$3,$4,$1,$1) RETURNING id',
+        [
+          accounts[0].id,
+          accounts[3].id,
+          nearStart.toISO(),
+          nearStart.plus({ minutes: 50 }).toISO(),
+        ],
+      )
+    ).rows[0].id;
+    const nearPath = '/api/v1/sessions/' + near + '/cancel';
+    const blocked = await api
+      .post(nearPath)
+      .set('Authorization', 'Bearer ' + token)
+      .set('Idempotency-Key', 'cancel-under-24h-key')
+      .send({})
+      .expect(403);
+    expect(blocked.body.code).toBe('WITHIN_24_HOURS');
+    await api
+      .post('/api/v1/sessions/' + near + '/reschedule')
+      .set('Authorization', 'Bearer ' + token)
+      .set('Idempotency-Key', 'reschedule-under24-key')
+      .send({ startAt: future.toISO() })
+      .expect(403);
+    await api
+      .post(nearPath)
+      .set('Authorization', 'Bearer ' + unrelatedProToken)
+      .set('Idempotency-Key', 'professional-cancel-key')
+      .send({})
+      .expect(200);
+    expect(
+      (
+        await database.pool.query(
+          "SELECT count(*) FROM notifications WHERE type='session_cancelled'",
+        )
+      ).rows[0].count,
+    ).toBe('2');
+    expect(
+      (
+        await database.pool.query(
+          "SELECT count(*) FROM notifications WHERE type='session_rescheduled'",
+        )
+      ).rows[0].count,
+    ).toBe('1');
   } finally {
     await app.close();
     await pg.stop();
