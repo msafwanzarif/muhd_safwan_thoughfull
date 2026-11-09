@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+@theme static {
+  --font-sans: 'Open Sans', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --color-indigo-brand-50: #eaf0f8;
+  --color-indigo-brand-100: #d5e2f4;
+  --color-indigo-brand-200: #b9d0ee;
+  --color-indigo-brand-300: #9ec2f0;
+  --color-indigo-brand-400: #679bda;
+  --color-indigo-brand-500: #326eb6;
+  --color-indigo-brand-600: #03367e;
+  --color-indigo-brand-700: #082c63;
+  --color-indigo-brand-800: #0b254e;
+  --color-indigo-brand-900: #0b1a2a;
+  --color-indigo-brand-950: #071222;
+  --color-teal-brand-50: #e8f7f4;
+  --color-teal-brand-100: #c8eee7;
+  --color-teal-brand-200: #9bded6;
+  --color-teal-brand-300: #71d3c4;
+  --color-teal-brand-400: #5fd4c0;
+  --color-teal-brand-500: #00bfa2;
+  --color-teal-brand-600: #2d7f7a;
+  --color-teal-brand-700: #246863;
+  --color-teal-brand-800: #1f4b47;
+  --color-teal-brand-900: #12342f;
+  --color-teal-brand-950: #09221f;
+}
+:root {
+  --ui-primary: #03367e;
+  --ui-bg: #f4f8fa;
+  --ui-bg-elevated: #fff;
+  --ui-bg-muted: #eaf0f8;
+  --ui-text: #333;
+  --ui-text-highlighted: #1b2b33;
+  --ui-text-muted: #55747e;
+  --ui-border: #dce5e9;
+  --brand-surface: #fff;
+  --brand-hero: #e8f7f4;
+}
+.dark {
+  --ui-primary: #9ec2f0;
+  --ui-bg: #0e1a22;
+  --ui-bg-elevated: #15242e;
+  --ui-bg-muted: #1d3240;
+  --ui-text: #e8eff2;
+  --ui-text-highlighted: #f2f6f8;
+  --ui-text-muted: #9fb4bd;
+  --ui-border: #2a4150;
+  --brand-surface: #15242e;
+  --brand-hero: #12342f;
+}
+body {
+  margin: 0;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    color: var(--ui-text-highlighted);
+  }
+}
+button,
+a {
+  touch-action: manipulation;
+}
+:focus-visible {
+  outline: 3px solid var(--ui-primary);
+  outline-offset: 3px;
+}

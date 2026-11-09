@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [swc.vite()],
   test: {
     projects: [
+      './frontend/vitest.config.ts',
       {
         extends: true,
         test: { name: 'unit', include: ['backend/src/**/*.spec.ts'] },

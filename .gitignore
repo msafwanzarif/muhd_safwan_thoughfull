@@ -2,3 +2,10 @@ node_modules/
 **/dist/
 .env
 coverage/
+
+**/.nuxt/
+**/.output/
+**/.data/
+playwright-report/
+test-results/
+backend/openapi.json

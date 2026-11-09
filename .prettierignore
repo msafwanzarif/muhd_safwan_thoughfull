@@ -2,3 +2,6 @@
 **/dist/**
 **/coverage/**
 package-lock.json
+**/.nuxt/**
+**/.output/**
+frontend/app/types/api.d.ts
