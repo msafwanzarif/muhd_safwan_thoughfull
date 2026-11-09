@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports: ['3000:3000']
+    environment:
+      DATABASE_URL: postgresql://thoughtfull:thoughtfull@postgres:5432/thoughtfull
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FRONTEND_ORIGIN: http://localhost:3001
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: thoughtfull
+      POSTGRES_PASSWORD: thoughtfull
+      POSTGRES_DB: thoughtfull
+    ports: ['5432:5432']
+    volumes: ['postgres_data:/var/lib/postgresql']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U thoughtfull -d thoughtfull']
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes: ['redis_data:/data']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 10
+volumes:
+  postgres_data:
+  redis_data:
