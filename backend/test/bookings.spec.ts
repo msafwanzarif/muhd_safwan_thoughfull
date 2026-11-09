@@ -215,6 +215,93 @@ it('books real slots exactly once and rejects concurrent professional/member ove
         .get(IdempotencyService)
         .execute(accounts[0].id, 'short', 'payload', async () => ({})),
     ).rejects.toMatchObject({ status: 400 });
+    const proToken = (
+      await auth.login({ ...credentials, email: '2@example.test' })
+    ).token;
+    const otherToken = (
+      await auth.login({ ...credentials, email: '1@example.test' })
+    ).token;
+    const unrelatedProToken = (
+      await auth.login({ ...credentials, email: '3@example.test' })
+    ).token;
+    await api.get('/api/v1/sessions').expect(401);
+    const mySessions = await api
+      .get('/api/v1/sessions?page=1&pageSize=1')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(mySessions.body.items).toHaveLength(1);
+    expect(mySessions.body.total).toBeGreaterThan(1);
+    expect(mySessions.body.totalPages).toBe(mySessions.body.total);
+    expect(mySessions.body.items[0].member.id).toBe(accounts[0].id);
+    expect(JSON.stringify(mySessions.body)).not.toMatch(
+      /email|password|tokenHash/,
+    );
+    const ownPath = '/api/v1/sessions/' + pair[0].body.id;
+    const detail = await api
+      .get(ownPath)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(detail.body.member.name).toBe('Test');
+    await api
+      .get(ownPath)
+      .set('Authorization', 'Bearer ' + proToken)
+      .expect(200);
+    const stranger = await api
+      .get(ownPath)
+      .set('Authorization', 'Bearer ' + otherToken)
+      .expect(404);
+    await api
+      .get(ownPath)
+      .set('Authorization', 'Bearer ' + unrelatedProToken)
+      .expect(404);
+    const missing = await api
+      .get('/api/v1/sessions/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(404);
+    expect(stranger.body).toEqual(missing.body);
+    const professionalList = await api
+      .get('/api/v1/sessions')
+      .set('Authorization', 'Bearer ' + proToken)
+      .expect(200);
+    expect(
+      professionalList.body.items.every(
+        (item: { professional: { id: string } }) =>
+          item.professional.id === accounts[2].id,
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(professionalList.body)).not.toContain('email');
+    await api
+      .get('/api/v1/sessions?memberId=' + accounts[1].id)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(400);
+    for (const query of ['page=0', 'pageSize=101', 'status=invalid']) {
+      await api
+        .get('/api/v1/sessions?' + query)
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400);
+    }
+    await api
+      .get('/api/v1/sessions/not-a-uuid')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(400);
+    expect(
+      (
+        await api
+          .get('/api/v1/sessions?page=100')
+          .set('Authorization', 'Bearer ' + token)
+          .expect(200)
+      ).body.items,
+    ).toEqual([]);
+    await database.pool.query(
+      "UPDATE booking_sessions SET status='cancelled' WHERE id=$1",
+      [pair[0].body.id],
+    );
+    const cancelled = await api
+      .get('/api/v1/sessions?status=cancelled')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(cancelled.body.total).toBe(1);
+    expect(cancelled.body.items[0].id).toBe(pair[0].body.id);
   } finally {
     await app.close();
     await pg.stop();

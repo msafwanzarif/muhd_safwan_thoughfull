@@ -1,3 +1,9 @@
+import { Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
+import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
+import {
+  SessionResponseDto,
+  SessionsPageResponseDto,
+} from './dto/session-response.dto';
 import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,6 +35,34 @@ import { BookingResponseDto } from './dto/booking-response.dto';
 @Controller({ path: 'sessions', version: '1' })
 export class BookingsController {
   constructor(private readonly bookings: BookingsService) {}
+
+  @ApiOperation({
+    summary: 'List my sessions',
+    description:
+      'Member or professional sessions selected from the authenticated identity. Ordered by start time, then ID. Includes all statuses unless filtered. Participant emails are never returned.',
+  })
+  @ApiResponse({ status: 200, type: SessionsPageResponseDto })
+  @Get()
+  list(
+    @CurrentUser() user: SessionUser,
+    @Query() query: ListSessionsQueryDto,
+  ): Promise<SessionsPageResponseDto> {
+    return this.bookings.list(user, query);
+  }
+
+  @ApiOperation({
+    summary: 'Get my session',
+    description:
+      'Only session participants can access it. Unrelated and nonexistent sessions return the same 404.',
+  })
+  @ApiResponse({ status: 200, type: SessionResponseDto })
+  @Get(':id')
+  get(
+    @CurrentUser() user: SessionUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<SessionResponseDto> {
+    return this.bookings.get(user, id);
+  }
 
   @ApiOperation({
     summary: 'Book a professional session',

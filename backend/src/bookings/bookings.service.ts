@@ -1,3 +1,12 @@
+import { NotFoundException } from '@nestjs/common';
+import { alias } from 'drizzle-orm/pg-core';
+import { and, eq, count } from 'drizzle-orm';
+import { DatabaseService } from '../database/database.module';
+import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
+import {
+  SessionResponseDto,
+  SessionsPageResponseDto,
+} from './dto/session-response.dto';
 import {
   ConflictException,
   ForbiddenException,
@@ -15,8 +24,88 @@ import { BookingResponseDto } from './dto/booking-response.dto';
 export class BookingsService {
   constructor(
     private readonly slots: SlotsService,
+    private readonly database: DatabaseService,
     private readonly idempotency: IdempotencyService,
   ) {}
+
+  private participantFilter(user: SessionUser) {
+    return user.role === 'member'
+      ? eq(bookingSessions.memberId, user.userId)
+      : eq(bookingSessions.professionalId, user.userId);
+  }
+
+  private sessionQuery() {
+    const member = alias(users, 'member');
+    const professional = alias(users, 'professional');
+
+    return this.database.db
+      .select({
+        id: bookingSessions.id,
+        startAt: bookingSessions.startAt,
+        endAt: bookingSessions.endAt,
+        status: bookingSessions.status,
+        member: { id: member.id, name: member.name, timezone: member.timezone },
+        professional: {
+          id: professional.id,
+          name: professional.name,
+          timezone: professional.timezone,
+        },
+      })
+      .from(bookingSessions)
+      .innerJoin(member, eq(member.id, bookingSessions.memberId))
+      .innerJoin(
+        professional,
+        eq(professional.id, bookingSessions.professionalId),
+      );
+  }
+
+  async list(
+    user: SessionUser,
+    query: ListSessionsQueryDto,
+  ): Promise<SessionsPageResponseDto> {
+    const filter = and(
+      this.participantFilter(user),
+      query.status ? eq(bookingSessions.status, query.status) : undefined,
+    );
+    const [rows, [totals]] = await Promise.all([
+      this.sessionQuery()
+        .where(filter)
+        .orderBy(bookingSessions.startAt, bookingSessions.id)
+        .limit(query.pageSize)
+        .offset((query.page - 1) * query.pageSize),
+      this.database.db
+        .select({ total: count() })
+        .from(bookingSessions)
+        .where(filter),
+    ]);
+
+    return {
+      items: rows.map((row) => ({
+        ...row,
+        startAt: row.startAt.toISOString(),
+        endAt: row.endAt.toISOString(),
+      })),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: totals.total,
+      totalPages: Math.ceil(totals.total / query.pageSize),
+    };
+  }
+
+  async get(user: SessionUser, id: string): Promise<SessionResponseDto> {
+    const [row] = await this.sessionQuery().where(
+      and(eq(bookingSessions.id, id), this.participantFilter(user)),
+    );
+    if (!row) {
+      throw new NotFoundException('Session not found');
+    }
+
+    return {
+      ...row,
+      startAt: row.startAt.toISOString(),
+      endAt: row.endAt.toISOString(),
+    };
+  }
 
   async create(
     member: SessionUser,
