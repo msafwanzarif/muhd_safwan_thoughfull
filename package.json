@@ -22,7 +22,8 @@
     "typecheck:web": "npm run typecheck -w frontend",
     "gen:api": "npm run build && node backend/scripts/export-openapi.cjs && npm run gen:api -w frontend",
     "test:browser": "npm run test:browser -w frontend",
-    "audit:security": "npm audit --audit-level=high"
+    "audit:security": "npm audit --audit-level=high",
+    "test:all": "npm test && npm run test:browser"
   },
   "engines": {
     "node": "^26.0.0"

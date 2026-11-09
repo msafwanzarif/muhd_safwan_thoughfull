@@ -7,9 +7,7 @@ defineProps<{ error: NuxtError }>();
     ><main class="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6">
       <AppBrand />
       <h1 class="mt-8 text-3xl font-bold">
-        {{
-          error.status === 404 ? 'Page not found' : 'Something went wrong'
-        }}
+        {{ error.status === 404 ? 'Page not found' : 'Something went wrong' }}
       </h1>
       <p class="mt-4 text-muted">
         {{

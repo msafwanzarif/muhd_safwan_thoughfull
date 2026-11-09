@@ -5,7 +5,7 @@ test('renders the branded shell without horizontal overflow', async ({
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
+  await page.goto('/login');
   await expect(page.locator('html')).toHaveClass(/light/);
   await expect(
     page.getByRole('heading', {
@@ -13,7 +13,7 @@ test('renders the branded shell without horizontal overflow', async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Make space for your wellbeing.' }),
+    page.getByRole('heading', { name: 'Welcome back' }),
   ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Switch to dark mode' }),

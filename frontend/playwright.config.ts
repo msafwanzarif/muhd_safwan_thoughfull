@@ -16,10 +16,21 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'npm run preview:test',
-    url: 'http://127.0.0.1:3011',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: [
+    {
+      command:
+        'npm run build -w backend && node backend/scripts/serve-auth-test-api.cjs',
+      cwd: '..',
+      url: 'http://127.0.0.1:3012/api/v1/auth/me',
+      timeout: 120000,
+      reuseExistingServer: false,
+    },
+    {
+      command: 'npm run preview:test',
+      env: { NUXT_PUBLIC_API_BASE: 'http://127.0.0.1:3012/api/v1' },
+      url: 'http://127.0.0.1:3011',
+      reuseExistingServer: false,
+      timeout: 120000,
+    },
+  ],
 });

@@ -17,7 +17,7 @@ const items = [
       ><template #header><AppBrand /></template
       ><UNavigationMenu :items="items" orientation="vertical" /><template
         #footer
-        ><AppThemeControl /></template></UDashboardSidebar
+        ><AppUserMenu /></template></UDashboardSidebar
     ><UDashboardPanel
       ><template #header
         ><UDashboardNavbar title="ThoughtFull"

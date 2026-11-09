@@ -12,7 +12,7 @@
           <NuxtLink to="/professionals">Find a professional</NuxtLink
           ><NuxtLink to="/sessions">My sessions</NuxtLink>
         </nav>
-        <AppThemeControl />
+        <AppUserMenu />
       </div>
     </header>
     <main id="main-content" class="mx-auto max-w-7xl px-6 py-10"><slot /></main>
