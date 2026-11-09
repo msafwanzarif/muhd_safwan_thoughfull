@@ -428,6 +428,28 @@ it('books real slots exactly once and rejects concurrent professional/member ove
         )
       ).rows[0].count,
     ).toBe('1');
+    const originalReminders = (
+      await database.pool.query(
+        'SELECT status FROM reminders WHERE session_id=$1',
+        [original.id],
+      )
+    ).rows;
+    expect(originalReminders).toHaveLength(4);
+    expect(
+      originalReminders.every(
+        (r: { status: string }) => r.status === 'cancelled',
+      ),
+    ).toBe(true);
+    const movedReminders = (
+      await database.pool.query(
+        'SELECT status FROM reminders WHERE session_id=$1',
+        [moved.body.session.id],
+      )
+    ).rows;
+    expect(movedReminders).toHaveLength(4);
+    expect(
+      movedReminders.every((r: { status: string }) => r.status === 'cancelled'),
+    ).toBe(true);
   } finally {
     await app.close();
     await pg.stop();

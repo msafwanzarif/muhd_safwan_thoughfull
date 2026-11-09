@@ -44,4 +44,10 @@ My sessions (step 6): GET /api/v1/sessions supports page (default 1), pageSize (
 
 Cancellation and rescheduling (step 7): POST /api/v1/sessions/:id/cancel accepts an optional reason. Members need at least 24 hours remaining (exactly 24 hours is allowed); professionals may cancel their sessions at any time. POST /api/v1/sessions/:id/reschedule accepts a UTC startAt and is member-only, for the same professional. The original must be at least 24 hours away; the new slot may be sooner if it meets the two-hour notice rule. Both require Idempotency-Key and return 200.
 
-Cancellation retains history and frees the slot. Rescheduling marks the original rescheduled and links a new active booking in one transaction; failures preserve the original. Pending reminders are cancelled and the other participant receives a stored notification. Reminder queue scheduling and delivery are implemented in step 8.
+Cancellation retains history and frees the slot. Rescheduling marks the original rescheduled and links a new active booking in one transaction; failures preserve the original. Pending reminders are cancelled and the other participant receives a stored notification. Reminder queue scheduling and delivery are handled by the reminder worker.
+
+Reminders and notifications (step 8): bookings create future 24-hour and 1-hour reminders for both participants in the booking transaction. BullMQ delayed jobs use the reminder ID as job ID. Startup and a 15-second reconciliation loop restore pending jobs after Redis loss and retry synchronization failures. Cancel/reschedule removes queued jobs after commit; the worker always checks database status before delivery.
+
+Notification creation and marking a reminder sent commit together under row locks, so duplicate jobs do not duplicate notifications. Overdue reminders are delivered if the session has not started; otherwise they are skipped.
+
+Notification endpoints: GET /api/v1/notifications (limit and cursor), GET /api/v1/notifications/unread-count, PATCH /api/v1/notifications/:id/read. Only the authenticated recipient can list or change notifications. Repeated mark-read calls retain the first timestamp. Clients poll and format structured UTC data in their own timezone. Swagger includes all request/response DTOs.

@@ -1,3 +1,6 @@
+import { Optional } from '@nestjs/common';
+import { createReminderRecords } from '../reminders/reminder-records';
+import { ReminderQueueService } from '../reminders/reminder-queue.service';
 import { NotFoundException } from '@nestjs/common';
 import { alias } from 'drizzle-orm/pg-core';
 import { and, eq, count } from 'drizzle-orm';
@@ -26,6 +29,7 @@ export class BookingsService {
     private readonly slots: SlotsService,
     private readonly database: DatabaseService,
     private readonly idempotency: IdempotencyService,
+    @Optional() private readonly reminderQueue?: ReminderQueueService,
   ) {}
 
   private participantFilter(user: SessionUser) {
@@ -117,7 +121,7 @@ export class BookingsService {
     }
     const startAt = new Date(dto.startAt).toISOString();
     try {
-      return await this.idempotency.execute(
+      const result = await this.idempotency.execute<BookingResponseDto>(
         member.userId,
         key,
         JSON.stringify({
@@ -156,6 +160,8 @@ export class BookingsService {
             })
             .returning();
 
+          await createReminderRecords(tx, booking);
+
           return {
             id: booking.id,
             memberId: booking.memberId,
@@ -166,6 +172,9 @@ export class BookingsService {
           };
         },
       );
+      await this.reminderQueue?.syncSession(result.id);
+
+      return result;
     } catch (error) {
       const cause = error as { code?: string; cause?: { code?: string } };
       if (['23P01', '40P01'].includes(cause.cause?.code ?? cause.code ?? '')) {

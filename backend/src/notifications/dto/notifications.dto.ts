@@ -1,0 +1,65 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, Min, Max, IsOptional, IsUUID } from 'class-validator';
+
+export class NotificationsQueryDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Use nextCursor from the previous page',
+  })
+  @IsOptional()
+  @IsUUID()
+  cursor?: string;
+
+  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
+}
+
+export class NotificationResponseDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+
+  @ApiProperty({
+    enum: [
+      'reminder_24h',
+      'reminder_1h',
+      'session_cancelled',
+      'session_rescheduled',
+    ],
+  })
+  type!:
+    | 'reminder_24h'
+    | 'reminder_1h'
+    | 'session_cancelled'
+    | 'session_rescheduled';
+
+  @ApiProperty({ format: 'uuid' }) sessionId!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'Structured notification data; format UTC times in the reader timezone',
+  })
+  data!: unknown;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true }) readAt!:
+    string | null;
+
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+}
+
+export class NotificationsPageResponseDto {
+  @ApiProperty({ type: [NotificationResponseDto] })
+  items!: NotificationResponseDto[];
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true }) nextCursor!:
+    string | null;
+}
+
+export class UnreadCountResponseDto {
+  @ApiProperty() count!: number;
+}
