@@ -401,6 +401,72 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
       [seeded.rows.map((r) => r.id)],
     );
     expect(hoursAfter.rows).toEqual(hoursBefore.rows);
+    const account = await api
+      .get('/api/v1/users/me')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(account.body.id).toBe(member.id);
+    expect(account.body.name).toBe('Test');
+    expect(account.body).not.toHaveProperty('email');
+    await api
+      .patch('/api/v1/users/me')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ title: 'Not allowed' })
+      .expect(400);
+    await api
+      .patch('/api/v1/users/me')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ name: 'Updated member' })
+      .expect(200);
+    await api
+      .patch('/api/v1/users/me')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({
+        name: 'Updated professional',
+        bio: 'Updated biography',
+        languages: ['ms'],
+      })
+      .expect(200);
+    const publicProfile = await api
+      .get('/api/v1/professionals/' + professional.id)
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(publicProfile.body.bio).toBe('Updated biography');
+    expect(publicProfile.body.languages).toEqual(['ms']);
+    expect(publicProfile.body).not.toHaveProperty('email');
+    await api
+      .get('/api/v1/professionals/' + member.id)
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(404);
+    const bulkDates = [
+      { localDate: '2027-05-01', reason: 'Break' },
+      { localDate: '2027-05-02' },
+    ];
+    const bulk = await api
+      .put('/api/v1/blocked-dates/bulk')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({ dates: bulkDates })
+      .expect(200);
+    expect(bulk.body.items).toHaveLength(2);
+    await api
+      .put('/api/v1/blocked-dates/bulk')
+      .set('Authorization', 'Bearer ' + proToken)
+      .send({
+        dates: [{ localDate: '2027-06-01' }, { localDate: '2027-06-31' }],
+      })
+      .expect(400);
+    expect(
+      (
+        await database.pool.query(
+          "SELECT count(*) FROM blocked_dates WHERE local_date='2027-06-01'",
+        )
+      ).rows[0].count,
+    ).toBe('0');
+    await api
+      .put('/api/v1/blocked-dates/bulk')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .send({ dates: bulkDates })
+      .expect(403);
   } finally {
     await app.close();
     await pg.stop();

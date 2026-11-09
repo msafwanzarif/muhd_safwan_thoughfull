@@ -1,3 +1,8 @@
+import type { DatabaseTransaction } from '../common/idempotency/idempotency.service';
+import {
+  BulkBlockedDatesDto,
+  BulkBlockedDatesResponseDto,
+} from './dto/blocked-dates.dto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -51,58 +56,82 @@ export class BlockedDatesService {
     id: string,
     dto: SaveBlockedDateDto,
   ): Promise<SaveBlockedDateResponseDto> {
-    return this.database.db.transaction(async (tx) => {
-      const [user] = await tx
-        .select()
-        .from(users)
-        .where(eq(users.id, id))
-        .for('update');
-      if (!user || user.role !== 'professional') {
-        throw new ForbiddenException(
-          'Only professionals can manage blocked dates',
-        );
-      }
-      const day = DateTime.fromISO(dto.localDate, { zone: user.timezone });
-      if (!day.isValid || day.toISODate() !== dto.localDate) {
-        throw new BadRequestException('Invalid calendar date');
-      }
-      const [blocked] = await tx
-        .insert(blockedDates)
-        .values({
-          professionalId: id,
-          localDate: dto.localDate,
-          reason: dto.reason ?? null,
-          createdBy: id,
-          updatedBy: id,
-        })
-        .onConflictDoUpdate({
-          target: [blockedDates.professionalId, blockedDates.localDate],
-          set: { reason: dto.reason ?? null, updatedBy: id },
-        })
-        .returning();
-      const sessions = await tx
-        .select()
-        .from(bookingSessions)
-        .where(
-          and(
-            eq(bookingSessions.professionalId, id),
-            eq(bookingSessions.status, 'active'),
-            lt(bookingSessions.startAt, day.plus({ days: 1 }).toJSDate()),
-            gt(bookingSessions.endAt, day.toJSDate()),
-          ),
-        );
+    return this.database.db.transaction((tx) => this.saveDate(tx, id, dto));
+  }
 
-      return {
-        id: blocked.id,
-        localDate: blocked.localDate,
-        reason: blocked.reason,
-        warnings: sessions.map((s) => ({
-          id: s.id,
-          startAt: s.startAt.toISOString(),
-          endAt: s.endAt.toISOString(),
-        })),
-      };
+  async saveMany(
+    id: string,
+    dto: BulkBlockedDatesDto,
+  ): Promise<BulkBlockedDatesResponseDto> {
+    if (new Set(dto.dates.map((d) => d.localDate)).size !== dto.dates.length) {
+      throw new BadRequestException('Dates must be unique');
+    }
+
+    return this.database.db.transaction(async (tx) => {
+      const items: SaveBlockedDateResponseDto[] = [];
+      for (const date of dto.dates) {
+        items.push(await this.saveDate(tx, id, date));
+      }
+
+      return { items };
     });
+  }
+
+  private async saveDate(
+    tx: DatabaseTransaction,
+    id: string,
+    dto: SaveBlockedDateDto,
+  ): Promise<SaveBlockedDateResponseDto> {
+    const [user] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .for('update');
+    if (!user || user.role !== 'professional') {
+      throw new ForbiddenException(
+        'Only professionals can manage blocked dates',
+      );
+    }
+    const day = DateTime.fromISO(dto.localDate, { zone: user.timezone });
+    if (!day.isValid || day.toISODate() !== dto.localDate) {
+      throw new BadRequestException('Invalid calendar date');
+    }
+    const [blocked] = await tx
+      .insert(blockedDates)
+      .values({
+        professionalId: id,
+        localDate: dto.localDate,
+        reason: dto.reason ?? null,
+        createdBy: id,
+        updatedBy: id,
+      })
+      .onConflictDoUpdate({
+        target: [blockedDates.professionalId, blockedDates.localDate],
+        set: { reason: dto.reason ?? null, updatedBy: id },
+      })
+      .returning();
+    const sessions = await tx
+      .select()
+      .from(bookingSessions)
+      .where(
+        and(
+          eq(bookingSessions.professionalId, id),
+          eq(bookingSessions.status, 'active'),
+          lt(bookingSessions.startAt, day.plus({ days: 1 }).toJSDate()),
+          gt(bookingSessions.endAt, day.toJSDate()),
+        ),
+      );
+
+    return {
+      id: blocked.id,
+      localDate: blocked.localDate,
+      reason: blocked.reason,
+      warnings: sessions.map((session) => ({
+        id: session.id,
+        startAt: session.startAt.toISOString(),
+        endAt: session.endAt.toISOString(),
+      })),
+    };
   }
 
   async remove(userId: string, id: string): Promise<void> {

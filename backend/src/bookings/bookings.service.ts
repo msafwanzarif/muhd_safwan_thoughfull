@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+import { gt, lte, gte, lt, desc } from 'drizzle-orm';
 import { Optional } from '@nestjs/common';
 import { createReminderRecords } from '../reminders/reminder-records';
 import { ReminderQueueService } from '../reminders/reminder-queue.service';
@@ -39,12 +41,19 @@ export class BookingsService {
   }
 
   private sessionQuery() {
+    const successor = alias(bookingSessions, 'successor');
     const member = alias(users, 'member');
     const professional = alias(users, 'professional');
 
     return this.database.db
       .select({
         id: bookingSessions.id,
+        createdAt: bookingSessions.createdAt,
+        cancelledAt: bookingSessions.cancelledAt,
+        cancelledBy: bookingSessions.cancelledBy,
+        reason: bookingSessions.reason,
+        rescheduledFromId: bookingSessions.rescheduledFromId,
+        rescheduledToId: successor.id,
         startAt: bookingSessions.startAt,
         endAt: bookingSessions.endAt,
         status: bookingSessions.status,
@@ -56,6 +65,7 @@ export class BookingsService {
         },
       })
       .from(bookingSessions)
+      .leftJoin(successor, eq(successor.rescheduledFromId, bookingSessions.id))
       .innerJoin(member, eq(member.id, bookingSessions.memberId))
       .innerJoin(
         professional,
@@ -67,14 +77,44 @@ export class BookingsService {
     user: SessionUser,
     query: ListSessionsQueryDto,
   ): Promise<SessionsPageResponseDto> {
+    if (query.status && query.statuses) {
+      throw new BadRequestException('Choose status or statuses, not both');
+    }
+    if (
+      query.from &&
+      query.to &&
+      Date.parse(query.from) >= Date.parse(query.to)
+    ) {
+      throw new BadRequestException('from must be before to');
+    }
+    const now = new Date();
     const filter = and(
       this.participantFilter(user),
       query.status ? eq(bookingSessions.status, query.status) : undefined,
+      query.statuses
+        ? inArray(bookingSessions.status, query.statuses)
+        : undefined,
+      query.period === 'upcoming'
+        ? gt(bookingSessions.endAt, now)
+        : query.period === 'past'
+          ? lte(bookingSessions.endAt, now)
+          : undefined,
+      query.from
+        ? gte(bookingSessions.startAt, new Date(query.from))
+        : undefined,
+      query.to ? lt(bookingSessions.startAt, new Date(query.to)) : undefined,
     );
     const [rows, [totals]] = await Promise.all([
       this.sessionQuery()
         .where(filter)
-        .orderBy(bookingSessions.startAt, bookingSessions.id)
+        .orderBy(
+          query.period === 'past'
+            ? desc(bookingSessions.startAt)
+            : bookingSessions.startAt,
+          query.period === 'past'
+            ? desc(bookingSessions.id)
+            : bookingSessions.id,
+        )
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize),
       this.database.db
@@ -86,6 +126,8 @@ export class BookingsService {
     return {
       items: rows.map((row) => ({
         ...row,
+        createdAt: row.createdAt.toISOString(),
+        cancelledAt: row.cancelledAt?.toISOString() ?? null,
         startAt: row.startAt.toISOString(),
         endAt: row.endAt.toISOString(),
       })),
@@ -106,6 +148,8 @@ export class BookingsService {
 
     return {
       ...row,
+      createdAt: row.createdAt.toISOString(),
+      cancelledAt: row.cancelledAt?.toISOString() ?? null,
       startAt: row.startAt.toISOString(),
       endAt: row.endAt.toISOString(),
     };

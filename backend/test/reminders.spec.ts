@@ -255,6 +255,33 @@ it('recovers pending jobs, delivers once and protects notification ownership', a
       .get('/api/v1/notifications?limit=101')
       .set('Authorization', 'Bearer ' + token)
       .expect(400);
+    expect(list.body.items[0].data.participantName).toBe('Test');
+    const allRead = await api
+      .patch('/api/v1/notifications/read-all')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(allRead.body.count).toBe(1);
+    expect(
+      (
+        await api
+          .get('/api/v1/notifications/unread-count')
+          .set('Authorization', 'Bearer ' + token)
+      ).body.count,
+    ).toBe(0);
+    expect(
+      (
+        await api
+          .get('/api/v1/notifications/unread-count')
+          .set('Authorization', 'Bearer ' + proToken)
+      ).body.count,
+    ).toBe(2);
+    expect(
+      (
+        await api
+          .patch('/api/v1/notifications/read-all')
+          .set('Authorization', 'Bearer ' + token)
+      ).body.count,
+    ).toBe(0);
   } finally {
     await app.close();
     await redis.stop();

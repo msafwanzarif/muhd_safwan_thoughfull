@@ -450,6 +450,49 @@ it('books real slots exactly once and rejects concurrent professional/member ove
     expect(
       movedReminders.every((r: { status: string }) => r.status === 'cancelled'),
     ).toBe(true);
+    const upcoming = await api
+      .get(
+        '/api/v1/sessions?period=upcoming&statuses=active,cancelled,rescheduled',
+      )
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(
+      upcoming.body.items.every(
+        (item: { endAt: string }) => Date.parse(item.endAt) > Date.now(),
+      ),
+    ).toBe(true);
+    const history = await api
+      .get('/api/v1/sessions/' + original.id)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(history.body.rescheduledToId).toBe(moved.body.session.id);
+    expect(history.body.createdAt).toBeTruthy();
+    const cancelledDetail = await api
+      .get('/api/v1/sessions/' + moved.body.session.id)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(cancelledDetail.body.reason).toBe('Plans changed');
+    expect(cancelledDetail.body.cancelledBy).toBe(accounts[0].id);
+    const bounded = await api
+      .get(
+        '/api/v1/sessions?from=' +
+          encodeURIComponent(future.toISO()!) +
+          '&to=' +
+          encodeURIComponent(future.plus({ hours: 1 }).toISO()!),
+      )
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(
+      bounded.body.items.every(
+        (item: { startAt: string }) =>
+          Date.parse(item.startAt) >= future.toMillis() &&
+          Date.parse(item.startAt) < future.plus({ hours: 1 }).toMillis(),
+      ),
+    ).toBe(true);
+    await api
+      .get('/api/v1/sessions?status=active&statuses=cancelled')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(400);
   } finally {
     await app.close();
     await pg.stop();

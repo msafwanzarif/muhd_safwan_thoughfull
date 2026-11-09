@@ -20,6 +20,22 @@ export class SessionResponseDto {
 
   @ApiProperty({ format: 'date-time' }) endAt!: string;
 
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  cancelledAt!: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true }) cancelledBy!:
+    string | null;
+
+  @ApiProperty({ type: String, nullable: true }) reason!: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  rescheduledFromId!: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  rescheduledToId!: string | null;
+
   @ApiProperty({ enum: ['active', 'cancelled', 'rescheduled'] }) status!:
     'active' | 'cancelled' | 'rescheduled';
 }

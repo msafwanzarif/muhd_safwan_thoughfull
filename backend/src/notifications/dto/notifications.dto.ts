@@ -19,6 +19,23 @@ export class NotificationsQueryDto {
   limit: number = 20;
 }
 
+export class NotificationDataDto {
+  @ApiPropertyOptional({ format: 'date-time' }) startAt?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' }) reminderId?: string;
+
+  @ApiPropertyOptional() participantName?: string;
+
+  @ApiPropertyOptional({ enum: ['member', 'professional'] }) cancelledByRole?:
+    'member' | 'professional';
+
+  @ApiPropertyOptional({ type: String, nullable: true }) reason?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid' }) previousSessionId?: string;
+
+  @ApiPropertyOptional({ format: 'date-time' }) previousStartAt?: string;
+}
+
 export class NotificationResponseDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
 
@@ -38,13 +55,8 @@ export class NotificationResponseDto {
 
   @ApiProperty({ format: 'uuid' }) sessionId!: string;
 
-  @ApiProperty({
-    type: 'object',
-    additionalProperties: true,
-    description:
-      'Structured notification data; format UTC times in the reader timezone',
-  })
-  data!: unknown;
+  @ApiProperty({ type: NotificationDataDto })
+  data!: NotificationDataDto;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true }) readAt!:
     string | null;

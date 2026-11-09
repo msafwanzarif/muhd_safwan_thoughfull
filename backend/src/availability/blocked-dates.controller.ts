@@ -1,4 +1,8 @@
 import {
+  BulkBlockedDatesDto,
+  BulkBlockedDatesResponseDto,
+} from './dto/blocked-dates.dto';
+import {
   Controller,
   Get,
   Put,
@@ -70,5 +74,19 @@ export class BlockedDatesController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<void> {
     return this.dates.remove(user.userId, id);
+  }
+
+  @Put('bulk')
+  @ApiOperation({
+    summary: 'Block multiple local dates atomically',
+    description:
+      'All dates save together; booked sessions are preserved and returned as post-save warnings.',
+  })
+  @ApiResponse({ status: 200, type: BulkBlockedDatesResponseDto })
+  bulk(
+    @CurrentUser() user: SessionUser,
+    @Body() dto: BulkBlockedDatesDto,
+  ): Promise<BulkBlockedDatesResponseDto> {
+    return this.dates.saveMany(user.userId, dto);
   }
 }

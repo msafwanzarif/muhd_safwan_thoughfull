@@ -172,9 +172,10 @@ export class IdempotencyService {
         }
       }
       if (Date.now() >= deadline) {
-        throw new ConflictException(
-          'Request still in progress; retry with the same key',
-        );
+        throw new ConflictException({
+          message: 'Request still in progress; retry with the same key',
+          code: 'REQUEST_IN_PROGRESS',
+        });
       }
       await setTimeout(100);
     }

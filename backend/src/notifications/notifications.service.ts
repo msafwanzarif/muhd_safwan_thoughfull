@@ -3,6 +3,7 @@ import { and, eq, lt, desc, isNull, count, sql } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.module';
 import { notifications } from '../database/schema';
 import {
+  NotificationDataDto,
   NotificationsQueryDto,
   NotificationsPageResponseDto,
   NotificationResponseDto,
@@ -20,7 +21,7 @@ export class NotificationsService {
       id: row.id,
       type: row.type,
       sessionId: row.sessionId,
-      data: row.data,
+      data: row.data as NotificationDataDto,
       readAt: row.readAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
     };
@@ -61,6 +62,21 @@ export class NotificationsService {
       );
 
     return row;
+  }
+
+  async markAllRead(userId: string): Promise<UnreadCountResponseDto> {
+    const changed = await this.database.db
+      .update(notifications)
+      .set({ readAt: new Date() })
+      .where(
+        and(
+          eq(notifications.recipientId, userId),
+          isNull(notifications.readAt),
+        ),
+      )
+      .returning({ id: notifications.id });
+
+    return { count: changed.length };
   }
 
   async markRead(userId: string, id: string): Promise<NotificationResponseDto> {

@@ -114,9 +114,10 @@ export class AuthService {
     } catch (error) {
       const cause = error as { code?: string; cause?: { code?: string } };
       if ((cause.cause?.code ?? cause.code) === '55P03') {
-        throw new ConflictException(
-          'Sign-up is still in progress; retry with the same key',
-        );
+        throw new ConflictException({
+          message: 'Sign-up is still in progress; retry with the same key',
+          code: 'REQUEST_IN_PROGRESS',
+        });
       }
       if ((cause.cause?.code ?? cause.code) === '23505') {
         throw new ConflictException('Email already registered');

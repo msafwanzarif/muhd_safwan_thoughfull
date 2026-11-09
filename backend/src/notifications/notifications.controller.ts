@@ -72,4 +72,15 @@ export class NotificationsController {
   ): Promise<NotificationResponseDto> {
     return this.notifications.markRead(user.userId, id);
   }
+
+  @ApiOperation({
+    summary: 'Mark all my notifications read',
+    description:
+      'Returns count updated; existing read timestamps are preserved.',
+  })
+  @ApiResponse({ status: 200, type: UnreadCountResponseDto })
+  @Patch('read-all')
+  markAll(@CurrentUser() user: SessionUser): Promise<UnreadCountResponseDto> {
+    return this.notifications.markAllRead(user.userId);
+  }
 }

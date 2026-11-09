@@ -1,3 +1,5 @@
+import { professionalProfiles } from '../database/schema';
+import { AccountResponseDto, UpdateAccountDto } from './dto/account.dto';
 import { sessionWithinHours } from '../availability/domain/session-within-hours';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { and, eq, gt } from 'drizzle-orm';
@@ -9,6 +11,68 @@ import { ChangeTimezoneDto, TimezoneResponseDto } from './dto/timezone.dto';
 @Injectable()
 export class UsersService {
   constructor(private readonly database: DatabaseService) {}
+
+  async account(userId: string): Promise<AccountResponseDto> {
+    const [row] = await this.database.db
+      .select({
+        id: users.id,
+        name: users.name,
+        role: users.role,
+        timezone: users.timezone,
+        title: professionalProfiles.title,
+        bio: professionalProfiles.bio,
+        specialisations: professionalProfiles.specialisations,
+        languages: professionalProfiles.languages,
+      })
+      .from(users)
+      .leftJoin(professionalProfiles, eq(professionalProfiles.userId, users.id))
+      .where(eq(users.id, userId));
+
+    return {
+      ...row,
+      specialisations: row.specialisations ?? [],
+      languages: row.languages ?? [],
+    };
+  }
+
+  async updateAccount(
+    userId: string,
+    dto: UpdateAccountDto,
+  ): Promise<AccountResponseDto> {
+    if (Object.values(dto).some((value) => value === null)) {
+      throw new BadRequestException('Profile values cannot be null');
+    }
+    await this.database.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+      const { name, ...profile } = dto;
+      const hasProfile = Object.values(profile).some(
+        (value) => value !== undefined,
+      );
+      if (user.role !== 'professional' && hasProfile) {
+        throw new BadRequestException(
+          'Professional fields require the professional role',
+        );
+      }
+      if (name !== undefined) {
+        await tx.update(users).set({ name }).where(eq(users.id, userId));
+      }
+      if (hasProfile) {
+        await tx
+          .insert(professionalProfiles)
+          .values({ userId, ...profile })
+          .onConflictDoUpdate({
+            target: professionalProfiles.userId,
+            set: profile,
+          });
+      }
+    });
+
+    return this.account(userId);
+  }
 
   async timezone(
     userId: string,

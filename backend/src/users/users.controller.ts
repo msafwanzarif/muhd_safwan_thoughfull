@@ -1,3 +1,5 @@
+import { Get } from '@nestjs/common';
+import { AccountResponseDto, UpdateAccountDto } from './dto/account.dto';
 import { Body, Controller, Patch, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +26,23 @@ import { ChangeTimezoneDto, TimezoneResponseDto } from './dto/timezone.dto';
 @Controller({ path: 'users/me', version: '1' })
 export class UsersController {
   constructor(private readonly users: UsersService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get my account and profile' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
+  account(@CurrentUser() user: SessionUser): Promise<AccountResponseDto> {
+    return this.users.account(user.userId);
+  }
+
+  @Patch()
+  @ApiOperation({ summary: 'Update my name or professional profile' })
+  @ApiResponse({ status: 200, type: AccountResponseDto })
+  update(
+    @CurrentUser() user: SessionUser,
+    @Body() dto: UpdateAccountDto,
+  ): Promise<AccountResponseDto> {
+    return this.users.updateAccount(user.userId, dto);
+  }
 
   @ApiOperation({
     summary: 'Change my timezone',

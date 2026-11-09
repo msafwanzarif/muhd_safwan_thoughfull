@@ -1,3 +1,5 @@
+import { NotFoundException } from '@nestjs/common';
+import { ProfessionalResponseDto } from './dto/professionals.dto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -26,6 +28,35 @@ import {
 @Injectable()
 export class ProfessionalsService {
   constructor(private readonly database: DatabaseService) {}
+
+  async get(member: SessionUser, id: string): Promise<ProfessionalResponseDto> {
+    if (member.role !== 'member') {
+      throw new ForbiddenException('Only members can browse professionals');
+    }
+    const [row] = await this.database.db
+      .select({
+        id: users.id,
+        name: users.name,
+        timezone: users.timezone,
+        title: professionalProfiles.title,
+        bio: professionalProfiles.bio,
+        specialisations: professionalProfiles.specialisations,
+        languages: professionalProfiles.languages,
+        hasWorkingHours: sql<boolean>`exists (select 1 from working_hours wh where wh.professional_id=${users.id})`,
+      })
+      .from(users)
+      .leftJoin(professionalProfiles, eq(professionalProfiles.userId, users.id))
+      .where(and(eq(users.id, id), eq(users.role, 'professional')));
+    if (!row) {
+      throw new NotFoundException('Professional not found');
+    }
+
+    return {
+      ...row,
+      specialisations: row.specialisations ?? [],
+      languages: row.languages ?? [],
+    };
+  }
 
   async list(
     member: SessionUser,

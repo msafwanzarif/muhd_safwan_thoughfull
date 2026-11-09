@@ -1,3 +1,5 @@
+import { Param, ParseUUIDPipe } from '@nestjs/common';
+import { ProfessionalResponseDto } from './dto/professionals.dto';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
@@ -40,5 +42,16 @@ export class ProfessionalsController {
     @Query() query: ProfessionalsQueryDto,
   ): Promise<ProfessionalsPageResponseDto> {
     return this.professionals.list(member, query);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a public professional profile' })
+  @ApiResponse({ status: 200, type: ProfessionalResponseDto })
+  @ApiResponse({ status: 404, type: ProblemDetailsResponseDto })
+  get(
+    @CurrentUser() user: SessionUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<ProfessionalResponseDto> {
+    return this.professionals.get(user, id);
   }
 }

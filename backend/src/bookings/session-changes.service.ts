@@ -115,6 +115,10 @@ export class SessionChangesService {
             })
             .where(eq(bookingSessions.id, id));
           await this.cancelReminders(tx, id);
+          const [actor] = await tx
+            .select({ name: users.name })
+            .from(users)
+            .where(eq(users.id, user.userId));
           await tx.insert(notifications).values({
             recipientId:
               user.role === 'member'
@@ -125,6 +129,8 @@ export class SessionChangesService {
             data: {
               startAt: session.startAt.toISOString(),
               cancelledByRole: user.role,
+              participantName: actor.name,
+              reason: dto.reason ?? null,
             },
           });
 
@@ -206,11 +212,16 @@ export class SessionChangesService {
             .returning();
           await createReminderRecords(tx, session);
           await this.cancelReminders(tx, id);
+          const [actor] = await tx
+            .select({ name: users.name })
+            .from(users)
+            .where(eq(users.id, user.userId));
           await tx.insert(notifications).values({
             recipientId: original.professionalId,
             type: 'session_rescheduled',
             sessionId: session.id,
             data: {
+              participantName: actor.name,
               previousSessionId: id,
               previousStartAt: original.startAt.toISOString(),
               startAt: session.startAt.toISOString(),

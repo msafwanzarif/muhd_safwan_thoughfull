@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.module';
-import { reminders, bookingSessions, notifications } from '../database/schema';
+import {
+  reminders,
+  bookingSessions,
+  notifications,
+  users,
+} from '../database/schema';
 
 @Injectable()
 export class ReminderDeliveryService {
@@ -50,11 +55,26 @@ export class ReminderDeliveryService {
       if (reminder.dueAt > now) {
         throw new Error('Reminder is not due yet');
       }
+      const [participant] = await tx
+        .select({ name: users.name })
+        .from(users)
+        .where(
+          eq(
+            users.id,
+            reminder.recipientId === session.memberId
+              ? session.professionalId
+              : session.memberId,
+          ),
+        );
       await tx.insert(notifications).values({
         recipientId: reminder.recipientId,
         type: reminder.type === '24h' ? 'reminder_24h' : 'reminder_1h',
         sessionId: session.id,
-        data: { reminderId: id, startAt: session.startAt.toISOString() },
+        data: {
+          reminderId: id,
+          participantName: participant.name,
+          startAt: session.startAt.toISOString(),
+        },
       });
       await tx
         .update(reminders)

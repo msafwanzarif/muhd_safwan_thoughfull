@@ -1,3 +1,10 @@
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  ArrayMinSize,
+  ArrayMaxSize,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength, Matches } from 'class-validator';
 import { AffectedSessionDto } from './working-hours.dto';
@@ -31,4 +38,19 @@ export class BlockedDatesResponseDto {
 
 export class SaveBlockedDateResponseDto extends BlockedDateResponseDto {
   @ApiProperty({ type: [AffectedSessionDto] }) warnings!: AffectedSessionDto[];
+}
+
+export class BulkBlockedDatesDto {
+  @ApiProperty({ type: [SaveBlockedDateDto], maxItems: 90 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(90)
+  @ValidateNested({ each: true })
+  @Type(() => SaveBlockedDateDto)
+  dates!: SaveBlockedDateDto[];
+}
+
+export class BulkBlockedDatesResponseDto {
+  @ApiProperty({ type: [SaveBlockedDateResponseDto] })
+  items!: SaveBlockedDateResponseDto[];
 }
