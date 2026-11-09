@@ -7,7 +7,8 @@
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node dist/database/seed.js"
   },
   "dependencies": {
     "@nestjs/bullmq": "^12.0.1",

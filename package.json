@@ -14,7 +14,8 @@
     "lint": "eslint . && npm run format:check",
     "lint:fix": "eslint . --fix && npm run format",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:seed": "npm run db:seed -w backend"
   },
   "engines": {
     "node": "^26.0.0"

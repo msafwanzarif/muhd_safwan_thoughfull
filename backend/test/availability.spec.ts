@@ -1,4 +1,6 @@
+import { seedProfessionals } from '../src/database/seed-roster';
 import { UsersModule } from '../src/users/users.module';
+import { seedData } from '../src/database/seed-data';
 import { ProfessionalsModule } from '../src/professionals/professionals.module';
 import 'reflect-metadata';
 import { it, expect } from 'vitest';
@@ -375,6 +377,30 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
       .delete('/api/v1/blocked-dates/' + blocked.body.id)
       .set('Authorization', 'Bearer ' + proToken)
       .expect(204);
+    await seedData(database.db);
+    await seedData(database.db);
+    expect(
+      (
+        await database.pool.query(
+          "SELECT count(*) FROM users WHERE email IN ('aina@example.test','ravi@example.test','taylor@example.test','sam@example.test','jordan@example.test')",
+        )
+      ).rows[0].count,
+    ).toBe('5');
+    const seeded = await database.pool.query(
+      'SELECT id,email FROM users WHERE email=ANY($1::text[])',
+      [seedProfessionals.map((p) => p.email)],
+    );
+    expect(seeded.rows).toHaveLength(15);
+    const hoursBefore = await database.pool.query(
+      'SELECT professional_id,weekday,start_minute,length_hours FROM working_hours WHERE professional_id=ANY($1::uuid[]) ORDER BY professional_id,weekday,start_minute',
+      [seeded.rows.map((r) => r.id)],
+    );
+    await seedData(database.db);
+    const hoursAfter = await database.pool.query(
+      'SELECT professional_id,weekday,start_minute,length_hours FROM working_hours WHERE professional_id=ANY($1::uuid[]) ORDER BY professional_id,weekday,start_minute',
+      [seeded.rows.map((r) => r.id)],
+    );
+    expect(hoursAfter.rows).toEqual(hoursBefore.rows);
   } finally {
     await app.close();
     await pg.stop();
