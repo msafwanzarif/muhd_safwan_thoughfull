@@ -1,3 +1,4 @@
+import { ProfessionalsModule } from './professionals/professionals.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { BookingsModule } from './bookings/bookings.module';
@@ -29,6 +30,7 @@ class HealthController {
     BookingsModule,
     RemindersModule,
     NotificationsModule,
+    ProfessionalsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../.env', '.env'],

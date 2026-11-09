@@ -1,3 +1,4 @@
+import { ProfessionalsModule } from '../src/professionals/professionals.module';
 import 'reflect-metadata';
 import { it, expect } from 'vitest';
 import { Test } from '@nestjs/testing';
@@ -36,6 +37,7 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
       AuthModule,
       AvailabilityModule,
       SlotsModule,
+      ProfessionalsModule,
     ],
   }).compile();
   const app = module.createNestApplication();
@@ -119,6 +121,99 @@ it('replaces weekly hours, preserves bookings with warnings, and protects slot p
           .set('Authorization', 'Bearer ' + proToken)
       ).body.ranges,
     ).toEqual(ranges);
+    await auth.signUp(
+      {
+        ...credentials,
+        email: 'no-hours@example.test',
+        role: 'professional',
+        title: 'Coach',
+        bio: 'No hours yet',
+        specialisations: ['career_coaching'],
+        languages: ['ms'],
+      },
+      'directory-no-hours-key',
+    );
+    await api.get('/api/v1/professionals').expect(401);
+    await api
+      .get('/api/v1/professionals')
+      .set('Authorization', 'Bearer ' + proToken)
+      .expect(403);
+    const directory = await api
+      .get('/api/v1/professionals?pageSize=1')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(directory.body.total).toBe(2);
+    expect(directory.body.items).toHaveLength(1);
+    expect(directory.body.totalPages).toBe(2);
+    expect(JSON.stringify(directory.body)).not.toMatch(/email|password/);
+    const filtered = await api
+      .get('/api/v1/professionals?name=test&specialisation=anxiety&language=en')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(filtered.body.items.map((p: { id: string }) => p.id)).toEqual([
+      professional.id,
+    ]);
+    expect(filtered.body.items[0].hasWorkingHours).toBe(true);
+    const noHours = await api
+      .get('/api/v1/professionals?language=ms')
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(noHours.body.items[0].hasWorkingHours).toBe(false);
+    expect(
+      (
+        await api
+          .get('/api/v1/professionals?name=%25')
+          .set('Authorization', 'Bearer ' + memberToken)
+      ).body.total,
+    ).toBe(0);
+    for (const query of [
+      'date=2027-02-30',
+      'date=invalid',
+      'language=invalid',
+      'pageSize=101',
+    ]) {
+      await api
+        .get('/api/v1/professionals?' + query)
+        .set('Authorization', 'Bearer ' + memberToken)
+        .expect(400);
+    }
+    const dateSearch = '/api/v1/professionals?date=' + start.toISODate();
+    const onDate = await api
+      .get(dateSearch)
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(onDate.body.items.map((p: { id: string }) => p.id)).toEqual([
+      professional.id,
+    ]);
+    await database.pool.query(
+      "UPDATE users SET timezone='Pacific/Honolulu' WHERE id=$1",
+      [member.id],
+    );
+    const memberDate = start.setZone('Pacific/Honolulu').toISODate();
+    const acrossMidnight = await api
+      .get('/api/v1/professionals?date=' + memberDate)
+      .set('Authorization', 'Bearer ' + memberToken)
+      .expect(200);
+    expect(acrossMidnight.body.items[0].id).toBe(professional.id);
+    await database.pool.query("UPDATE users SET timezone='UTC' WHERE id=$1", [
+      member.id,
+    ]);
+    await database.pool.query(
+      'INSERT INTO blocked_dates (professional_id,local_date,created_by,updated_by) VALUES ($1,$2,$1,$1)',
+      [professional.id, start.toISODate()],
+    );
+    expect(
+      (
+        await api
+          .get(dateSearch)
+          .set('Authorization', 'Bearer ' + memberToken)
+          .expect(200)
+      ).body.total,
+    ).toBe(0);
+    await database.pool.query(
+      'DELETE FROM blocked_dates WHERE professional_id=$1',
+      [professional.id],
+    );
     const path = '/api/v1/professionals/' + professional.id + '/slots';
     const slots = await api
       .get(path)

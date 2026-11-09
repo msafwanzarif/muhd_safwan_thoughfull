@@ -51,3 +51,7 @@ Reminders and notifications (step 8): bookings create future 24-hour and 1-hour 
 Notification creation and marking a reminder sent commit together under row locks, so duplicate jobs do not duplicate notifications. Overdue reminders are delivered if the session has not started; otherwise they are skipped.
 
 Notification endpoints: GET /api/v1/notifications (limit and cursor), GET /api/v1/notifications/unread-count, PATCH /api/v1/notifications/:id/read. Only the authenticated recipient can list or change notifications. Repeated mark-read calls retain the first timestamp. Clients poll and format structured UTC data in their own timezone. Swagger includes all request/response DTOs.
+
+Professional directory (step 9): GET /api/v1/professionals accepts page, pageSize, name (case-insensitive literal substring), specialisation, language and date (YYYY-MM-DD in the member's timezone). Members only. Responses include public profile details and hasWorkingHours; professionals without working hours remain visible without a date filter. Emails and account secrets are excluded.
+
+Date filtering uses SQL to narrow profile matches and relevant professional-local weekdays, then batch-loads hours, active sessions and blocked dates. It generates slots for the shortlist and paginates matching professionals in memory. This is suitable for the demo; large directories should move date availability filtering/pagination into a dedicated indexed availability model. Invalid calendar dates return 400; dates outside the booking window return an empty page.
