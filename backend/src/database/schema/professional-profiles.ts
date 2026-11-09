@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { pgTable, uuid, text, jsonb, check } from 'drizzle-orm/pg-core';
 import { audit } from './columns';
 import { users } from './users';
+
 export const specialisationCodes = [
   'anxiety',
   'depression',
@@ -10,9 +11,13 @@ export const specialisationCodes = [
   'grief',
   'career_coaching',
 ] as const;
+
 export const languageCodes = ['en', 'ms', 'zh', 'ta', 'yue', 'id'] as const;
+
 export type SpecialisationCode = (typeof specialisationCodes)[number];
+
 export type LanguageCode = (typeof languageCodes)[number];
+
 export const professionalProfiles = pgTable(
   'professional_profiles',
   {

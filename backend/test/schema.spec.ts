@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { resolve } from 'node:path';
+
 it('migrates cleanly and enforces booking and working-hours exclusions', async () => {
   const container = await new PostgreSqlContainer('postgres:18-alpine').start();
   const pool = new Pool({ connectionString: container.getConnectionUri() });

@@ -2,6 +2,7 @@ import { it, expect } from 'vitest';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { GenericContainer } from 'testcontainers';
 import { Pool } from 'pg';
+
 it('runs PostgreSQL 18 and Redis', async () => {
   const pg = await new PostgreSqlContainer('postgres:18-alpine').start();
   try {

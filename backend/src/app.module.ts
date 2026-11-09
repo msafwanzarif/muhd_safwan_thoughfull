@@ -2,6 +2,7 @@ import { DatabaseModule } from './database/database.module';
 import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+
 @Controller({ path: 'health', version: '1' })
 class HealthController {
   @Get() check() {
@@ -15,8 +16,12 @@ class HealthController {
       isGlobal: true,
       envFilePath: ['../.env', '.env'],
       validate: (env) => {
-        for (const key of ['DATABASE_URL', 'REDIS_HOST', 'FRONTEND_ORIGIN'])
-          if (!env[key]) throw new Error(key + ' is required');
+        for (const key of ['DATABASE_URL', 'REDIS_HOST', 'FRONTEND_ORIGIN']) {
+          if (!env[key]) {
+            throw new Error(key + ' is required');
+          }
+        }
+
         return env;
       },
     }),
