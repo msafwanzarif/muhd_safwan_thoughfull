@@ -15,6 +15,13 @@
       "when": 1794234923541,
       "tag": "0001_exclusion_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794236217943,
+      "tag": "0002_signup_idempotency",
+      "breakpoints": true
     }
   ]
 }

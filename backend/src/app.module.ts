@@ -1,3 +1,6 @@
+import { ApiResponse } from '@nestjs/swagger';
+import { HealthResponseDto } from './common/dto/health-response.dto';
+import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -5,13 +8,17 @@ import { BullModule } from '@nestjs/bullmq';
 
 @Controller({ path: 'health', version: '1' })
 class HealthController {
-  @Get() check() {
+  @ApiResponse({ status: 200, type: HealthResponseDto })
+  @Get()
+  check(): HealthResponseDto {
     return { status: 'ok' };
   }
 }
+
 @Module({
   imports: [
     DatabaseModule,
+    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../.env', '.env'],

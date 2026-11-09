@@ -9,6 +9,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       FRONTEND_ORIGIN: http://localhost:3001
+      API_ORIGIN: http://localhost:3000
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
