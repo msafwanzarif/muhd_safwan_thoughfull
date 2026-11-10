@@ -25,6 +25,11 @@ async function logout() {
 const items = computed(() => [
   { label: user.value?.name ?? 'Your account', type: 'label' as const },
   {
+    label: user.value?.role === 'member' ? 'Account' : 'My profile',
+    icon: 'i-lucide-user',
+    to: user.value?.role === 'member' ? '/account' : '/pro/profile',
+  },
+  {
     label: 'Log out',
     icon: 'i-lucide-log-out',
     disabled: busy.value,

@@ -6,7 +6,7 @@ import {
   type Professional,
 } from '~/utils/professionals';
 
-defineProps<{ professional: Professional }>();
+defineProps<{ professional: Professional; preview?: boolean }>();
 </script>
 
 <template>
@@ -25,7 +25,9 @@ defineProps<{ professional: Professional }>();
       />
       <div class="min-w-0">
         <h2 class="text-base font-bold">
+          <span v-if="preview">{{ professional.name }}</span>
           <NuxtLink
+            v-else
             :to="`/professionals/${professional.id}`"
             class="after:absolute after:inset-0 after:rounded-2xl"
             >{{ professional.name }}</NuxtLink
