@@ -73,3 +73,27 @@ test('renders the branded shell without horizontal overflow', async ({
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/light/);
 });
+
+test('keeps the signup hero at viewport height when professional fields expand', async ({
+  page,
+}, info) => {
+  await page.goto('/signup');
+  const hero = page.locator('aside');
+  const before = await hero.boundingBox();
+  await page.getByRole('button', { name: 'Professional', exact: true }).click();
+  await expect(
+    page.getByLabel('Professional title', { exact: true }),
+  ).toBeVisible();
+  const after = await hero.boundingBox();
+  expect(after!.height).toBe(before!.height);
+  if (info.project.name === 'desktop') {
+    expect(after!.height).toBe(page.viewportSize()!.height);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    expect((await hero.boundingBox())!.y).toBe(0);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

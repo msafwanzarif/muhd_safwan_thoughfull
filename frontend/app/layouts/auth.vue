@@ -1,7 +1,7 @@
 <template>
-  <div class="grid min-h-dvh lg:grid-cols-2">
+  <div class="auth-layout grid min-h-dvh lg:grid-cols-2">
     <aside
-      class="relative overflow-hidden bg-(--brand-hero) px-6 py-8 lg:flex lg:flex-col lg:px-14 lg:py-12"
+      class="relative overflow-hidden bg-(--brand-hero) px-6 py-8 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start lg:flex-col lg:px-14 lg:py-12"
     >
       <AppBrand />
       <div class="relative z-10 max-w-xl py-8 lg:my-auto lg:py-24">
@@ -32,3 +32,9 @@
     </main>
   </div>
 </template>
+
+<style>
+html:has(.auth-layout) {
+  scrollbar-gutter: stable;
+}
+</style>
