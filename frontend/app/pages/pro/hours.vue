@@ -3,12 +3,13 @@ import type { components } from '~/types/api';
 import type { WorkingRange } from '~/utils/schedule';
 import { copyRanges, rangeError } from '~/utils/hours';
 import { problemMessage } from '~/utils/problem';
-import { timezoneLabel } from '~/utils/professionals';
+import { scheduleTimezone } from '~/utils/schedule-display';
 
 definePageMeta({ layout: 'professional' });
 useHead({ title: 'Working hours · ThoughtFull' });
 const api = useApi();
 const user = useCurrentUser();
+const zone = computed(() => scheduleTimezone(user.value?.timezone ?? 'UTC'));
 const {
   data,
   status,
@@ -125,20 +126,48 @@ async function saveTimezone() {
 </script>
 
 <template>
-  <section class="max-w-4xl space-y-6">
-    <h1 class="text-3xl font-bold">Working hours</h1>
-    <p class="text-muted">
-      Times in {{ timezoneLabel(user?.timezone ?? 'UTC') }}. Use 15-minute
-      starts and whole-hour lengths. Each hour contains a 50-minute session and
-      a 10-minute gap.
-    </p>
-    <UButton
-      variant="outline"
-      class="min-h-11"
-      :disabled="dirty || busy"
-      @click="openTimezone"
-      >Change time zone</UButton
-    >
+  <section class="hours-page">
+    <header>
+      <h1 class="text-2xl leading-8 font-bold lg:text-3xl lg:leading-10">
+        Working hours
+      </h1>
+      <p
+        class="mt-1 text-[13px] leading-[19px] text-muted lg:text-sm lg:leading-5"
+      >
+        <span class="lg:hidden"
+          >50-minute sessions start every hour from each range’s start. Ranges
+          are whole hours.</span
+        >
+        <span class="hidden max-w-[670px] lg:block"
+          >Members can book 50-minute sessions starting every hour from the
+          start of each range, with a 10-minute break between them. Each range
+          must be a whole number of hours.</span
+        >
+      </p>
+    </header>
+    <div class="hours-zone">
+      <UIcon
+        name="i-lucide-globe"
+        class="hidden size-5 shrink-0 text-secondary lg:block"
+      />
+      <div class="min-w-0 flex-1">
+        <p class="text-xs leading-[18px] text-muted">Your time zone</p>
+        <p class="text-sm font-semibold lg:text-base">
+          {{ zone.city }} ({{ zone.offset }})<span class="hidden lg:inline">
+            · all times below are in this zone</span
+          >
+        </p>
+      </div>
+      <UButton
+        variant="outline"
+        class="min-h-11 justify-center"
+        :disabled="dirty || busy"
+        aria-label="Change time zone"
+        @click="openTimezone"
+        ><span class="lg:hidden">Change</span
+        ><span class="hidden lg:inline">Change time zone</span></UButton
+      >
+    </div>
     <p v-if="dirty" class="text-sm text-muted">
       Save or discard your changes before changing time zone.
     </p>
@@ -156,7 +185,7 @@ async function saveTimezone() {
     >
     <template v-else>
       <UAlert
-        v-if="saved"
+        v-if="saved && !warnings.length"
         role="status"
         color="success"
         title="Availability saved."
@@ -174,21 +203,28 @@ async function saveTimezone() {
         Saving an empty week removes all availability. Existing sessions are
         kept.
       </p>
-      <div class="flex flex-wrap gap-3">
-        <UButton
-          class="min-h-11"
-          :disabled="!dirty || !!invalid || busy"
-          :loading="busy"
-          @click="save"
-          >Save week</UButton
-        ><UButton
-          variant="outline"
-          class="min-h-11"
-          :disabled="!dirty || busy"
-          @click="discard"
-          >Discard changes</UButton
-        >
-      </div>
+      <footer class="hours-footer">
+        <p class="text-[13px] text-muted">
+          Start times go in 15-minute steps. Saving replaces your whole week at
+          once.
+        </p>
+        <div class="flex justify-end gap-2">
+          <UButton
+            variant="outline"
+            class="min-h-11 justify-center"
+            :disabled="!dirty || busy"
+            @click="discard"
+            >Discard changes</UButton
+          >
+          <UButton
+            class="min-h-11 justify-center font-bold"
+            :disabled="!dirty || !!invalid || busy"
+            :loading="busy"
+            @click="save"
+            >Save week</UButton
+          >
+        </div>
+      </footer>
     </template>
     <UModal
       v-model:open="timezoneOpen"
@@ -235,3 +271,39 @@ async function saveTimezone() {
     </UModal>
   </section>
 </template>
+
+<style scoped>
+.hours-page {
+  display: grid;
+  gap: 16px;
+}
+.hours-zone {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: 15px;
+  background: var(--brand-surface);
+}
+.hours-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  .hours-page {
+    gap: 20px;
+    margin-right: -16px;
+  }
+  .hours-zone {
+    padding: 14px 18px;
+    min-height: 74px;
+  }
+  .hours-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+</style>
