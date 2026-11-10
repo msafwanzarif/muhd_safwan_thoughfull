@@ -1,0 +1,59 @@
+services:
+  api:
+    image: ${API_IMAGE:-thoughtfull-api}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports: ['127.0.0.1:3000:3000']
+    environment:
+      DATABASE_URL: postgresql://thoughtfull:${POSTGRES_PASSWORD}@postgres:5432/thoughtfull
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FRONTEND_ORIGIN: https://thoughtfull.safwanzarif.dev
+      API_ORIGIN: https://thoughtfull.safwanzarif.dev
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  frontend:
+    image: ${FRONTEND_IMAGE:-thoughtfull-frontend}
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE: /api/v1
+    restart: unless-stopped
+    ports: ['127.0.0.1:3001:3001']
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: thoughtfull
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: thoughtfull
+    volumes: ['postgres_data:/var/lib/postgresql']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U thoughtfull -d thoughtfull']
+      interval: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '96mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes: ['redis_data:/data']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 20
+volumes:
+  postgres_data:
+  redis_data:

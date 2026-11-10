@@ -1,0 +1,42 @@
+name: Deploy dev
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: dev-deployment
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: docker compose -f compose.production.yaml build
+        env:
+          POSTGRES_PASSWORD: ci-placeholder
+      - run: docker save thoughtfull-api thoughtfull-frontend | gzip > release-images.tar.gz
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/*
+      - name: Upload and deploy
+        env:
+          HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          scp release-images.tar.gz compose.production.yaml deploy.sh "root@$HOST:/opt/thoughtfull/"
+          ssh "root@$HOST" 'sh /opt/thoughtfull/deploy.sh'
