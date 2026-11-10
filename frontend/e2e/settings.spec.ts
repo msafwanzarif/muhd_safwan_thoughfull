@@ -139,12 +139,23 @@ test('blocks selected local dates atomically and unblocks a date', async ({
   const first = await days.nth(0).getAttribute('data-value');
   const second = await days.nth(1).getAttribute('data-value');
   await days.nth(0).click();
+  await days.nth(0).click();
+  await expect(
+    page.getByRole('button', { name: 'Block selected dates', exact: true }),
+  ).toBeDisabled();
+  await days.nth(0).click();
   await days.nth(1).click();
-  await page.getByLabel('Reason (optional)').fill('Time off');
+  await page.getByLabel('Reason (optional, only you see it)').fill('Time off');
   await page.getByRole('button', { name: 'Block selected dates' }).click();
   await expect(
     page.getByText('Blocked dates saved. Existing bookings have been kept.'),
   ).toBeVisible();
+  await expect(
+    page.locator('[data-value="' + first + '"]').first(),
+  ).toHaveAttribute('data-disabled');
+  await expect(
+    page.getByRole('button', { name: 'Block selected dates', exact: true }),
+  ).toBeDisabled();
   expect(payloads).toEqual([
     {
       dates: [
