@@ -4,6 +4,7 @@ const props = defineProps<{
   pageSize: number;
   total: number;
   period: 'upcoming' | 'past';
+  includingCancelled?: boolean;
 }>();
 const emit = defineEmits<{ change: [page: number] }>();
 const pages = computed(() =>
@@ -33,7 +34,10 @@ const numbers = computed(() => {
 <template>
   <footer v-if="total || page > 1" class="schedule-pagination">
     <p class="hidden text-[13px] leading-5 text-muted lg:block">
-      Showing {{ first }}–{{ last }} of {{ total }} {{ period }} sessions
+      Showing {{ first }}–{{ last }} of {{ total }} {{ period }} sessions<span
+        v-if="includingCancelled"
+        >, including cancelled</span
+      >
     </p>
     <nav
       aria-label="Schedule pages"

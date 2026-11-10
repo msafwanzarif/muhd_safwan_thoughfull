@@ -286,8 +286,41 @@ function groupLabel(date: string) {
               >
                 {{ groupLabel(date)
                 }}<span class="hidden text-sm font-normal text-muted lg:inline">
-                  {{ ' · ' }}{{ sessions.length }}
-                  {{ sessions.length === 1 ? 'session' : 'sessions' }}</span
+                  {{ ' · '
+                  }}{{
+                    sessions.filter((session) => session.status === 'active')
+                      .length
+                  }}
+                  {{
+                    sessions.filter((session) => session.status === 'active')
+                      .length === 1
+                      ? 'session'
+                      : 'sessions'
+                  }}<span
+                    v-if="
+                      sessions.some(
+                        (session) => session.status === 'rescheduled',
+                      )
+                    "
+                    >,
+                    {{
+                      sessions.filter(
+                        (session) => session.status === 'rescheduled',
+                      ).length
+                    }}
+                    moved</span
+                  ><span
+                    v-if="
+                      sessions.some((session) => session.status === 'cancelled')
+                    "
+                    >,
+                    {{
+                      sessions.filter(
+                        (session) => session.status === 'cancelled',
+                      ).length
+                    }}
+                    cancelled</span
+                  ></span
                 >
               </h2>
               <div class="schedule-rows">
@@ -317,6 +350,7 @@ function groupLabel(date: string) {
             :total="data.total"
             :page-size="pageSize"
             :period="period"
+            :including-cancelled="cancelledQuery === '1'"
             @change="pageQuery = $event === 1 ? '' : String($event)"
           />
         </template>

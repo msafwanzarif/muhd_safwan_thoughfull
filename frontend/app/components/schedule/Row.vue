@@ -17,19 +17,58 @@ const startsSoon = computed(
     minutes.value > 0 &&
     minutes.value <= 60,
 );
-const original = props.session.rescheduledFromId
-  ? useAsyncData(`schedule-origin-${props.session.rescheduledFromId}`, () =>
-      api('/api/v1/sessions/{id}', {
-        method: 'get',
-        params: { id: props.session.rescheduledFromId! },
-      }),
-    )
-  : undefined;
-const metadata = computed(() =>
-  props.session.rescheduledFromId
-    ? `Rescheduled from ${original?.data.value ? scheduleDate(original.data.value.startAt, props.timezone, true) : 'another time'}`
-    : `Booked ${scheduleDate(props.session.createdAt, props.timezone)}`,
+const relatedId = computed(
+  () => props.session.rescheduledToId ?? props.session.rescheduledFromId,
 );
+const related = useAsyncData(
+  () => 'schedule-related-' + props.session.id,
+  async () => {
+    if (!relatedId.value) return null;
+    return api('/api/v1/sessions/{id}', {
+      method: 'get',
+      params: { id: relatedId.value },
+    });
+  },
+  { watch: [relatedId] },
+);
+const statusLabel = computed(() => {
+  if (props.session.status === 'rescheduled')
+    return `Rescheduled by ${props.session.member.name}`;
+  if (props.session.status === 'cancelled')
+    return (
+      'Cancelled by ' +
+      (props.session.cancelledBy === props.session.professional.id
+        ? 'you'
+        : props.session.member.name)
+    );
+  return '';
+});
+const metadata = computed(() => {
+  const session = props.session;
+  if (session.status === 'cancelled')
+    return (
+      (session.cancelledAt
+        ? 'Cancelled ' +
+          scheduleDate(session.cancelledAt, props.timezone) +
+          ' · '
+        : '') + (session.reason || 'No reason given')
+    );
+  if (session.rescheduledToId)
+    return related.data.value
+      ? 'Moved to ' +
+          scheduleDate(related.data.value.startAt, props.timezone, true) +
+          ', ' +
+          formatTime(related.data.value.startAt, props.timezone)
+      : 'Moved to a new time';
+  if (session.rescheduledFromId)
+    return related.data.value
+      ? 'Rescheduled from ' +
+          scheduleDate(related.data.value.startAt, props.timezone, true) +
+          ', ' +
+          formatTime(related.data.value.startAt, props.timezone)
+      : 'Rescheduled from another time';
+  return 'Booked ' + scheduleDate(session.createdAt, props.timezone);
+});
 </script>
 
 <template>
@@ -50,7 +89,10 @@ const metadata = computed(() =>
       :alt="session.member.name"
       :text="scheduleInitials(session.member.name)"
       :ui="{
-        root: 'size-10 shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
+        root:
+          session.status === 'active'
+            ? 'size-10 shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800'
+            : 'size-10 shrink-0 bg-muted',
         fallback: 'text-sm font-semibold text-primary dark:text-teal-brand-200',
       }"
     />
@@ -62,32 +104,37 @@ const metadata = computed(() =>
       </p>
       <h3 class="schedule-participant">{{ session.member.name }}</h3>
       <NuxtLink
-        v-if="session.rescheduledFromId"
+        v-if="relatedId"
         :to="{
           path: route.path,
-          query: { ...route.query, session: session.rescheduledFromId },
+          query: { ...route.query, session: relatedId },
         }"
-        class="hidden text-xs leading-[18px] text-muted hover:underline lg:block"
+        class="mt-1 block text-xs leading-[18px] text-muted underline decoration-dotted underline-offset-2"
         >{{ metadata }}</NuxtLink
       >
-      <p v-else class="hidden text-xs leading-[18px] text-muted lg:block">
+      <p
+        v-else
+        class="text-xs leading-[18px] text-muted"
+        :class="session.status === 'active' ? 'hidden lg:block' : 'mt-1 block'"
+      >
         {{ metadata }}
       </p>
       <span v-if="startsSoon" class="schedule-soon mt-1 flex w-fit lg:hidden"
         >Starts in {{ minutes }} min</span
       >
-      <p
-        v-if="session.status !== 'active'"
-        class="text-xs leading-[18px] text-muted"
+      <span
+        v-if="statusLabel"
+        class="schedule-status mt-2 inline-flex lg:hidden"
+        >{{ statusLabel }}</span
       >
-        {{ session.status === 'rescheduled' ? 'Rescheduled' : 'Cancelled'
-        }}<span v-if="session.reason"> · {{ session.reason }}</span>
-      </p>
     </div>
 
     <span v-if="startsSoon" class="schedule-soon hidden shrink-0 lg:inline-flex"
       >Starts in {{ minutes }} min</span
     >
+    <span v-if="statusLabel" class="schedule-status hidden lg:inline-flex">{{
+      statusLabel
+    }}</span>
     <UButton
       v-if="session.status === 'active'"
       variant="outline"
@@ -111,7 +158,25 @@ const metadata = computed(() =>
 }
 .schedule-row-inactive {
   border-style: dashed;
+  background: var(--ui-bg);
+}
+.schedule-row-inactive .schedule-time {
+  color: var(--ui-text-muted);
+  text-decoration: line-through;
+}
+.schedule-row-inactive .schedule-participant {
+  color: var(--ui-text-muted);
+}
+.schedule-status {
+  border-radius: 999px;
+  padding: 3px 8px;
   background: var(--ui-bg-muted);
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  line-height: 18px;
+  flex-shrink: 0;
+  max-width: 240px;
+  overflow-wrap: anywhere;
 }
 .schedule-time {
   color: var(--ui-primary);

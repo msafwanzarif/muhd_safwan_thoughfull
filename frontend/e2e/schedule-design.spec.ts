@@ -121,7 +121,7 @@ test('matches the supplied desktop and mobile schedule layout', async ({
   ).toBeVisible();
   if (!mobile)
     await expect(
-      page.getByText('Rescheduled from Wed 11 Nov', { exact: true }),
+      page.getByText('Rescheduled from Wed 11 Nov, 09:30', { exact: true }),
     ).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({

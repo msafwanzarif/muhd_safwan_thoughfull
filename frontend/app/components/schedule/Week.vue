@@ -163,10 +163,16 @@ function working(date: string, minute: number) {
             :aria-label="`${event.session.member.name}, ${formatSession(event.session.startAt, event.session.endAt, timezone)}, ${event.session.status}`"
             @click="emit('select', event.session)"
           >
-            <span class="block font-semibold">{{
-              formatTime(event.session.startAt, timezone)
-            }}</span
-            ><span class="block truncate">{{ event.session.member.name }}</span>
+            <span
+              class="block font-semibold"
+              :class="event.session.status !== 'active' ? 'line-through' : ''"
+              >{{ formatTime(event.session.startAt, timezone) }}</span
+            ><span class="block truncate">{{ event.session.member.name }}</span
+            ><span
+              v-if="event.session.status !== 'active'"
+              class="block text-[10px] font-semibold capitalize"
+              >{{ event.session.status }}</span
+            >
           </button>
           <div
             v-if="
