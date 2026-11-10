@@ -7,6 +7,26 @@ test('renders the branded shell without horizontal overflow', async ({
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/login');
   await expect(page.locator('html')).toHaveClass(/light/);
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    'href',
+    '/favicon.svg',
+  );
+  const favicon = await page.request.get('/favicon.svg');
+  expect(favicon.ok()).toBe(true);
+  expect(await favicon.text()).toContain('viewBox="126.4 -4.5 32 32"');
+  const iconPage = await page.context().newPage();
+  await iconPage.emulateMedia({ colorScheme: 'light' });
+  await iconPage.goto('/favicon.svg');
+  await expect(iconPage.locator('svg path')).toHaveCSS(
+    'fill',
+    'rgb(0, 191, 162)',
+  );
+  await iconPage.emulateMedia({ colorScheme: 'dark' });
+  await expect(iconPage.locator('svg path')).toHaveCSS(
+    'fill',
+    'rgb(255, 255, 255)',
+  );
+  await iconPage.close();
   await expect(
     page.getByRole('heading', {
       name: 'Someone to talk to, when you need it.',
@@ -31,6 +51,12 @@ test('renders the branded shell without horizontal overflow', async ({
   await page.getByRole('button', { name: 'Switch to dark mode' }).click();
 
   await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(
+    page
+      .getByRole('link', { name: 'ThoughtFull home' })
+      .locator('svg path')
+      .first(),
+  ).toHaveCSS('fill', 'rgb(255, 255, 255)');
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
