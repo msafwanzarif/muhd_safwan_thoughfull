@@ -53,12 +53,12 @@ const summary = computed(() =>
     <h1 id="directory-heading" class="text-3xl font-bold">
       Find a professional
     </h1>
-    <p class="mt-3 text-muted">
+    <p class="mt-1 text-[13px] leading-5 text-muted lg:text-sm">
       Counsellors and coaches you can book. Times shown in your time zone,
       {{ timezoneLabel(timezone) }}.
     </p>
     <div
-      class="mt-8 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 lg:grid-cols-4"
+      class="mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-2xl border border-default bg-(--brand-surface) p-4 lg:grid-cols-4 lg:gap-4 lg:p-5"
     >
       <UFormField label="Name" class="min-w-0">
         <UInput

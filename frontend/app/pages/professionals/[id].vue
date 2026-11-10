@@ -30,7 +30,7 @@ useHead({
       to="/professionals"
       variant="link"
       icon="i-lucide-arrow-left"
-      class="mb-6 min-h-11"
+      class="mb-4 min-h-11 px-0"
       >All professionals</UButton
     >
     <USkeleton
@@ -61,7 +61,7 @@ useHead({
       class="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
     >
       <article
-        class="space-y-6 rounded-2xl border border-default bg-(--brand-surface) p-6"
+        class="space-y-5 rounded-2xl border border-default bg-(--brand-surface) p-4 sm:p-6 xl:sticky xl:top-6"
       >
         <div class="flex items-start gap-4">
           <UAvatar
@@ -74,14 +74,17 @@ useHead({
             }"
           />
           <div>
-            <h1 class="text-3xl font-bold">{{ data.name }}</h1>
+            <h1 class="text-3xl font-bold wrap-anywhere">{{ data.name }}</h1>
             <p class="mt-2 text-muted">
               {{ data.title || 'Professional' }} · Based in
               {{ timezoneCity(data.timezone) }}
             </p>
           </div>
         </div>
-        <p v-if="data.bio" class="leading-relaxed whitespace-pre-line">
+        <p
+          v-if="data.bio"
+          class="leading-relaxed whitespace-pre-line wrap-anywhere"
+        >
           {{ data.bio }}
         </p>
         <div v-if="data.specialisations.length" class="flex flex-wrap gap-2">

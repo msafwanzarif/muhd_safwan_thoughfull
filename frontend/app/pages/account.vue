@@ -71,12 +71,14 @@ async function save() {
 </script>
 
 <template>
-  <section class="max-w-xl space-y-6">
-    <h1 class="text-3xl font-bold">My account</h1>
-    <p class="text-muted">
-      Your saved time zone is used for session times. Changing it keeps every
-      booking at the same instant.
-    </p>
+  <section class="mx-auto max-w-2xl space-y-5">
+    <header>
+      <h1 class="text-3xl font-bold">My account</h1>
+      <p class="mt-1 text-[13px] leading-5 text-muted lg:text-sm">
+        Your saved time zone is used for session times. Changing it keeps every
+        booking at the same instant.
+      </p>
+    </header>
     <UAlert
       v-if="success"
       role="status"
@@ -87,7 +89,7 @@ async function save() {
     <UForm
       :state="state"
       :validate="validate"
-      class="space-y-6 rounded-2xl border border-default bg-(--brand-surface) p-6"
+      class="space-y-6 rounded-2xl border border-default bg-(--brand-surface) p-4 sm:p-6"
       @submit="save"
     >
       <UFormField name="name" label="Name" required
@@ -102,16 +104,18 @@ async function save() {
       <UFormField name="timezone" label="City or time zone" required
         ><AppTimezonePicker v-model="state.timezone" :disabled="busy"
       /></UFormField>
-      <div class="flex flex-wrap gap-3">
+      <div
+        class="flex flex-col gap-2 border-t border-default pt-5 sm:flex-row sm:justify-end"
+      >
         <UButton
           type="submit"
-          class="min-h-11"
+          class="min-h-11 justify-center"
           :disabled="busy || !dirty"
           :loading="busy"
           >Save account</UButton
         ><UButton
           variant="outline"
-          class="min-h-11"
+          class="min-h-11 justify-center"
           :disabled="busy || !dirty"
           @click="discard"
           >Discard changes</UButton

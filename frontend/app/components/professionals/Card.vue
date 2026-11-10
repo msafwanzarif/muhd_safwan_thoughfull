@@ -43,8 +43,9 @@ defineProps<{ professional: Professional; preview?: boolean }>();
       </div>
     </div>
     <p
-      v-if="preview && professional.bio"
+      v-if="professional.bio"
       class="whitespace-pre-line leading-relaxed wrap-anywhere"
+      :class="preview ? '' : 'line-clamp-3 text-sm text-muted'"
     >
       {{ professional.bio }}
     </p>

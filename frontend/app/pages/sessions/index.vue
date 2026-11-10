@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { scheduleTimezone } from '~/utils/schedule-display';
 import { useRouteQuery } from '@vueuse/router';
 import type { components } from '~/types/api';
 
@@ -6,6 +7,7 @@ definePageMeta({ layout: 'member' });
 useHead({ title: 'My sessions · ThoughtFull' });
 const api = useApi();
 const user = useCurrentUser();
+const zone = computed(() => scheduleTimezone(user.value?.timezone ?? 'UTC'));
 const route = useRoute();
 const tabQuery = useRouteQuery<string>('tab', '', { mode: 'push' });
 const cancelledQuery = useRouteQuery<string>('cancelled', '', { mode: 'push' });
@@ -62,11 +64,13 @@ async function changed() {
 </script>
 
 <template>
-  <section class="space-y-6">
-    <h1 class="text-3xl font-bold">My sessions</h1>
-    <p class="text-muted">
-      Times in {{ user?.timezone }}. Sessions last 50 minutes.
-    </p>
+  <section class="mx-auto max-w-5xl space-y-5">
+    <header>
+      <h1 class="text-3xl font-bold">My sessions</h1>
+      <p class="mt-1 text-[13px] leading-5 text-muted lg:text-sm">
+        Times in {{ zone.city }} ({{ zone.offset }}). Sessions last 50 minutes.
+      </p>
+    </header>
     <SessionsDetail
       v-if="typeof route.query.session === 'string'"
       :id="route.query.session"
@@ -79,6 +83,13 @@ async function changed() {
           { label: 'Upcoming', value: 'upcoming' },
           { label: 'Past', value: 'past' },
         ]"
+        class="w-full sm:w-auto"
+        :ui="{
+          list: 'h-12 rounded-full bg-[#e5eef1] p-1 dark:bg-muted',
+          trigger:
+            'h-10 flex-1 rounded-full px-6 text-sm data-[state=active]:text-primary',
+          indicator: 'rounded-full bg-(--brand-surface) shadow-none',
+        }"
         :content="false"
         @update:model-value="setPeriod"
       />
@@ -116,6 +127,7 @@ async function changed() {
       </div>
       <UEmpty
         v-else
+        class="rounded-2xl border border-default bg-(--brand-surface) py-14"
         icon="i-lucide-calendar"
         title="No sessions to show"
         :description="
