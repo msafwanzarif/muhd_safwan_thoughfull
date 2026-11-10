@@ -5,12 +5,25 @@
     >
     <header class="border-b border-default bg-(--brand-surface)">
       <div
-        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-6 py-5"
+        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6"
       >
         <AppBrand />
-        <nav aria-label="Main navigation" class="flex gap-5 text-sm">
-          <NuxtLink to="/professionals">Find a professional</NuxtLink
-          ><NuxtLink to="/sessions">My sessions</NuxtLink>
+        <nav
+          aria-label="Main navigation"
+          class="order-3 flex w-full gap-2 text-sm lg:order-none lg:w-auto"
+        >
+          <NuxtLink
+            to="/professionals"
+            active-class="bg-muted text-primary"
+            class="flex min-h-11 items-center rounded-full px-4 font-semibold"
+            >Find a professional</NuxtLink
+          >
+          <NuxtLink
+            to="/sessions"
+            active-class="bg-muted text-primary"
+            class="flex min-h-11 items-center rounded-full px-4 font-semibold"
+            >My sessions</NuxtLink
+          >
         </nav>
         <AppUserMenu />
       </div>

@@ -38,8 +38,16 @@ const items = computed(() => [
     <AppThemeControl />
     <UDropdownMenu :items="items">
       <UButton variant="ghost" aria-label="Open account menu" :loading="busy">
-        <UAvatar :alt="user?.name" size="sm" />
-        <span class="max-w-32 truncate">{{ user?.name }}</span>
+        <UAvatar
+          :alt="user?.name"
+          size="sm"
+          :ui="{
+            root: 'bg-teal-brand-200 dark:bg-teal-brand-800',
+            fallback:
+              'font-semibold text-indigo-brand-600 dark:text-teal-brand-200',
+          }"
+        />
+        <span class="hidden max-w-32 truncate sm:inline">{{ user?.name }}</span>
         <UIcon name="i-lucide-chevron-down" />
       </UButton>
     </UDropdownMenu>

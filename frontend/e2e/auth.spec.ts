@@ -53,6 +53,29 @@ test('signs up, logs in with a cookie, restores the session and logs out', async
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Log in', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${home}$`));
+  if (!professional) {
+    await expect(
+      page.getByRole('link', { name: 'Directory Example 01', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('No availability', { exact: true }).first(),
+    ).toBeVisible();
+    await page.getByLabel('Name', { exact: true }).fill('Directory Example 13');
+    await expect(page).toHaveURL(/name=Directory\+Example\+13/);
+    await expect(
+      page.getByRole('link', { name: 'Directory Example 13', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Directory Example 01', exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole('link', { name: 'Directory Example 13', exact: true })
+      .click();
+    await expect(
+      page.getByRole('heading', { name: 'Directory Example 13', exact: true }),
+    ).toBeVisible();
+    await page.goto(home);
+  }
   const cookie = (await context.cookies()).find(
     (value) => value.name === 'session',
   );
@@ -144,9 +167,14 @@ test('retries an uncertain signup with the same key and handles an expired sessi
   expect(keys[0]).toMatch(/^[\da-f-]{36}$/);
 
   signedIn = true;
+  await page.route(/\/api\/v1\/professionals(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      json: { items: [], page: 1, pageSize: 12, total: 0, totalPages: 0 },
+    }),
+  );
   await page.goto('/professionals');
   await expect(
-    page.getByRole('heading', { name: 'Welcome, Alex Example' }),
+    page.getByRole('heading', { name: 'Find a professional' }),
   ).toBeVisible();
   signedIn = false;
   await page.reload();
