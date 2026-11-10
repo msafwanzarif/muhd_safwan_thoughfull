@@ -50,8 +50,8 @@ function dateTime(value: string) {
         :alt="session.professional.name"
         :text="scheduleInitials(session.professional.name)"
         :ui="{
-          root: 'size-10 shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
-          fallback: 'text-xs font-semibold text-primary',
+          root: 'size-12 shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
+          fallback: 'text-sm font-semibold text-primary',
         }"
       />
       <div class="min-w-0 flex-1">
