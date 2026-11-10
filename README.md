@@ -2,6 +2,8 @@
 
 A booking app for members and mental-health professionals. Members can find professionals, book 50-minute sessions, and manage their bookings. Professionals manage working hours, blocked dates, profiles, and schedules. Both roles receive in-app notifications.
 
+**Deployed app:** [thoughtfull.safwanzarif.dev](https://thoughtfull.safwanzarif.dev/)
+
 ## Prerequisites
 
 - **Docker setup:** Docker Engine/Desktop with Docker Compose v2 and Linux containers. Node is not required to run the app this way.
