@@ -9,7 +9,7 @@ export default await defineVitestProject({
     environmentOptions: {
       nuxt: {
         rootDir: fileURLToPath(new URL('.', import.meta.url)),
-        overrides: { ssr: true },
+        overrides: { ssr: true, experimental: { appManifest: false } },
       },
     },
   },

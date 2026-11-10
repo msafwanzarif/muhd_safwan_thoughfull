@@ -4,7 +4,8 @@ import Brand from '../app/components/app/Brand.vue';
 describe('application shell', () => {
   it('provides an accessible home link', async () => {
     const component = await mountSuspended(Brand);
-    expect(component.text()).toBe('ThoughtFull');
+    expect(component.get('svg').attributes('aria-hidden')).toBe('true');
+    expect(component.findAll('svg path').length).toBeGreaterThan(0);
     expect(component.get('a').attributes('aria-label')).toBe(
       'ThoughtFull home',
     );
