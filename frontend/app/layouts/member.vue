@@ -25,7 +25,9 @@
             >My sessions</NuxtLink
           >
         </nav>
-        <AppUserMenu />
+        <div class="flex items-center gap-1">
+          <NotificationsBell /><AppUserMenu />
+        </div>
       </div>
     </header>
     <main id="main-content" class="mx-auto max-w-7xl px-6 py-10"><slot /></main>
