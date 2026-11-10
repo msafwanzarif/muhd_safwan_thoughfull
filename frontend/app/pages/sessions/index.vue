@@ -64,10 +64,10 @@ async function changed() {
 </script>
 
 <template>
-  <section class="mx-auto max-w-5xl space-y-5">
+  <section class="mx-auto max-w-4xl space-y-5">
     <header>
       <h1 class="text-3xl font-bold">My sessions</h1>
-      <p class="mt-1 text-[13px] leading-5 text-muted lg:text-sm">
+      <p class="mt-1 text-sm leading-5 text-muted lg:text-[15px]">
         Times in {{ zone.city }} ({{ zone.offset }}). Sessions last 50 minutes.
       </p>
     </header>
@@ -83,11 +83,12 @@ async function changed() {
           { label: 'Upcoming', value: 'upcoming' },
           { label: 'Past', value: 'past' },
         ]"
-        class="w-full sm:w-auto"
+        class="w-full sm:w-[250px]"
         :ui="{
           list: 'h-12 rounded-full bg-[#e5eef1] p-1 dark:bg-muted',
           trigger:
-            'h-10 flex-1 rounded-full px-6 text-sm data-[state=active]:text-primary',
+            'h-10 flex-1 rounded-full px-4 text-sm data-[state=active]:text-primary',
+          label: 'overflow-visible whitespace-nowrap',
           indicator: 'rounded-full bg-(--brand-surface) shadow-none',
         }"
         :content="false"
@@ -116,8 +117,8 @@ async function changed() {
       ></UAlert
     >
     <template v-else-if="data">
-      <div v-if="data.items.length" class="space-y-5">
-        <SessionsCard
+      <div v-if="data.items.length" class="space-y-3">
+        <SessionsMemberCard
           v-for="session in data.items"
           :key="session.id"
           :session="session"
@@ -150,12 +151,29 @@ async function changed() {
           ></template
         ></UEmpty
       >
-      <AppPagination
-        :page="page"
-        :total="data.total"
-        :page-size="12"
-        @change="pageQuery = $event === 1 ? '' : String($event)"
-      />
+      <nav
+        v-if="data.total || page > 1"
+        aria-label="Sessions pages"
+        class="flex items-center justify-between gap-3 pt-2"
+      >
+        <UButton
+          variant="outline"
+          class="min-h-11 justify-center"
+          :disabled="page <= 1"
+          @click="pageQuery = page === 2 ? '' : String(page - 1)"
+          >Previous</UButton
+        >
+        <p class="text-sm text-muted">
+          Page {{ page }} of {{ Math.max(1, Math.ceil(data.total / 12)) }}
+        </p>
+        <UButton
+          variant="outline"
+          class="min-h-11 justify-center"
+          :disabled="page >= Math.ceil(data.total / 12)"
+          @click="pageQuery = String(page + 1)"
+          >Next</UButton
+        >
+      </nav>
     </template>
     <SessionsCancelModal
       v-model="cancelOpen"
