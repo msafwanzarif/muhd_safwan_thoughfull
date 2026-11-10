@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { parseDate } from '@internationalized/date';
+import type { components } from '~/types/api';
 import {
   dayEvents,
   dayOfWeek,
@@ -17,11 +18,16 @@ import {
 const props = defineProps<{
   sessions: Session[];
   ranges: WorkingRange[];
+  blockedDates: components['schemas']['BlockedDateResponseDto'][];
+  availabilityKnown: boolean;
   week: string;
   timezone: string;
 }>();
 const emit = defineEmits<{ select: [session: Session] }>();
 const now = useNow({ interval: 30000 });
+const blockedByDate = computed(
+  () => new Map(props.blockedDates.map((date) => [date.localDate, date])),
+);
 const days = computed(() =>
   Array.from({ length: 7 }, (_, index) =>
     parseDate(props.week).add({ days: index }).toString(),
@@ -57,6 +63,7 @@ const minutes = computed(() =>
 const clock = (minute: number) =>
   `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 function working(date: string, minute: number) {
+  if (blockedByDate.value.has(date)) return false;
   return props.ranges.some(
     (range) =>
       range.weekday === dayOfWeek(date) &&
@@ -81,6 +88,25 @@ function working(date: string, minute: number) {
           class="border-b border-l border-default p-3 text-center text-xs font-semibold"
         >
           {{ formatDate(`${date}T12:00:00Z`, 'UTC') }}
+          <UPopover v-if="blockedByDate.has(date)">
+            <UButton
+              color="error"
+              variant="ghost"
+              icon="i-lucide-calendar-off"
+              class="ml-1 inline-flex size-4 min-h-0 justify-center p-0 align-middle"
+              :ui="{ leadingIcon: 'size-3' }"
+              :aria-label="`Blocked ${date}. Show reason`"
+              title="Blocked date — show reason"
+            />
+            <template #content
+              ><p class="max-w-64 p-4 text-sm break-words">
+                {{
+                  blockedByDate.get(date)?.reason ||
+                  'No new bookings are available on this date.'
+                }}
+              </p></template
+            >
+          </UPopover>
         </h3>
         <div
           class="relative"
@@ -98,6 +124,8 @@ function working(date: string, minute: number) {
           v-for="date in days"
           :key="date"
           class="relative border-l border-default"
+          :class="blockedByDate.has(date) ? 'bg-error/5' : ''"
+          :data-date="date"
           :style="{ height: `${bounds.end - bounds.start}px` }"
         >
           <div
@@ -105,7 +133,13 @@ function working(date: string, minute: number) {
             :key="minute"
             aria-hidden="true"
             class="absolute inset-x-0 h-[15px] border-b border-default/30"
-            :class="working(date, minute) ? '' : 'outside-hours'"
+            :class="
+              !availabilityKnown
+                ? 'bg-muted'
+                : working(date, minute)
+                  ? ''
+                  : 'outside-hours'
+            "
             :style="{ top: `${minute - bounds.start}px` }"
           />
           <button
@@ -150,8 +184,13 @@ function working(date: string, minute: number) {
       </div>
     </div>
     <p class="text-xs text-muted">
-      Striped: outside working hours · Blue: upcoming · Muted: past/cancelled ·
-      Red line: now. Select a session for details.
+      {{
+        availabilityKnown
+          ? 'Striped: outside working hours or blocked date'
+          : 'Availability shading is unavailable'
+      }}
+      · Blue: upcoming · Muted: past/cancelled · Red line: now. Select a session
+      for details.
     </p>
   </div>
 </template>

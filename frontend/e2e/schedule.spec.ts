@@ -6,6 +6,17 @@ test('shows a professional schedule and allows cancellation inside 24 hours', as
   let cancelled = false;
   const queries: URLSearchParams[] = [];
   const start = new Date(Date.now() + 3600000);
+  const blockedDate = start.toISOString().slice(0, 10);
+  await page.route('**/api/v1/blocked-dates', (route) =>
+    route.fulfill({
+      json: {
+        timezone: 'UTC',
+        items: [
+          { id: 'blocked-date', localDate: blockedDate, reason: 'Time off' },
+        ],
+      },
+    }),
+  );
   const session = {
     id: '00000000-0000-4000-8000-000000000001',
     member: { id: 'm', name: 'Sam Example', timezone: 'UTC' },
@@ -116,6 +127,21 @@ test('shows a professional schedule and allows cancellation inside 24 hours', as
       .toBe(true);
     await expect(
       page.getByRole('button', { name: /Sam Example.*cancelled/ }),
+    ).toHaveCount(2);
+    await page
+      .getByRole('button', {
+        name: `Blocked ${blockedDate}. Show reason`,
+        exact: true,
+      })
+      .click();
+    await expect(page.getByText('Time off', { exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    const column = page.locator(`[data-date="${blockedDate}"]`);
+    const rows = await column.locator('[aria-hidden="true"]').count();
+    expect(rows).toBeGreaterThan(0);
+    await expect(column.locator('.outside-hours')).toHaveCount(rows);
+    await expect(
+      column.getByRole('button', { name: /Sam Example.*cancelled/ }),
     ).toHaveCount(2);
     await page.getByRole('button', { name: 'Next week' }).click();
     await expect(page).toHaveURL(/week=/);

@@ -59,6 +59,9 @@ test('loads notification history, marks it read and links to the session', async
   await page.route('**/api/v1/working-hours', (route) =>
     route.fulfill({ json: { timezone: 'UTC', ranges: [] } }),
   );
+  await page.route('**/api/v1/blocked-dates', (route) =>
+    route.fulfill({ json: { timezone: 'UTC', items: [] } }),
+  );
   await page.route(/\/api\/v1\/sessions(?:\?.*)?$/, (route) =>
     route.fulfill({
       json: { items: [], page: 1, pageSize: 12, total: 0, totalPages: 0 },

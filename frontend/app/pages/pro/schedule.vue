@@ -73,9 +73,16 @@ const { data, status, error, refresh } = useAsyncData(
   },
   { watch: [query] },
 );
-const hours = await useAsyncData('schedule-hours', () =>
-  api('/api/v1/working-hours', { method: 'get' }),
-);
+const [hours, blockedDates] = await Promise.all([
+  useAsyncData('schedule-hours', () =>
+    api('/api/v1/working-hours', { method: 'get' }),
+  ),
+  useAsyncData(
+    'schedule-blocked-dates',
+    () => api('/api/v1/blocked-dates', { method: 'get' }),
+    { watch: [timezone] },
+  ),
+]);
 const groups = computed(() => {
   const grouped = groupSessions(data.value?.items ?? [], timezone.value);
   return period.value === 'past' ? grouped.reverse() : grouped;
@@ -198,6 +205,11 @@ function setPeriod(value: string | number) {
         <ScheduleWeek
           :sessions="data.items"
           :ranges="hours.data.value?.ranges ?? []"
+          :blocked-dates="blockedDates.data.value?.items ?? []"
+          :availability-known="
+            hours.status.value === 'success' &&
+            blockedDates.status.value === 'success'
+          "
           :week="week.toString()"
           :timezone="timezone"
           @select="
@@ -205,6 +217,22 @@ function setPeriod(value: string | number) {
             detailOpen = true;
           "
         />
+        <UAlert
+          v-if="blockedDates.error.value"
+          role="alert"
+          color="warning"
+          title="Blocked dates couldn't be loaded."
+          description="Availability shading is unavailable. Existing sessions are still shown."
+        >
+          <template #actions
+            ><UButton
+              variant="outline"
+              class="min-h-11"
+              @click="blockedDates.refresh()"
+              >Retry blocked dates</UButton
+            ></template
+          >
+        </UAlert>
       </template>
       <template v-else>
         <section

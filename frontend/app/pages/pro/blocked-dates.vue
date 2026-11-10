@@ -66,6 +66,7 @@ async function save() {
     reason.value = '';
     success.value = 'Blocked dates saved. Existing bookings have been kept.';
     await refresh();
+    await refreshNuxtData('schedule-blocked-dates');
   } catch (cause) {
     error.value = problemMessage(cause);
   } finally {
@@ -86,6 +87,7 @@ async function remove(id: string, date: string) {
     warnings.value = [];
     success.value = 'Date unblocked.';
     await refresh();
+    await refreshNuxtData('schedule-blocked-dates');
   } catch (cause) {
     error.value = problemMessage(cause);
   } finally {
