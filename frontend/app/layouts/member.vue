@@ -21,7 +21,7 @@
           >
           <NuxtLink
             to="/sessions"
-            active-class="bg-muted text-primary"
+            active-class="bg-(--brand-surface) text-primary lg:bg-muted"
             class="flex min-h-11 items-center justify-center gap-2 rounded-full px-4 font-semibold transition-colors hover:bg-muted"
             ><UIcon
               name="i-lucide-calendar-days"
@@ -45,6 +45,12 @@
 </template>
 
 <style scoped>
+@media (max-width: 1023px) {
+  nav a[aria-current='page'] {
+    background: var(--brand-surface);
+    color: var(--ui-primary);
+  }
+}
 .member-main :deep(h1) {
   font-size: 24px;
   line-height: 32px;
