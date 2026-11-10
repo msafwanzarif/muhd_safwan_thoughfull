@@ -18,19 +18,41 @@ const items = computed(() => [
 ]);
 </script>
 <template>
-  <UDashboardGroup
-    ><UDashboardSidebar collapsible resizable
-      ><template #header><AppBrand /></template
-      ><UNavigationMenu :items="items" orientation="vertical" /><template
-        #footer
-        ><AppUserMenu /></template></UDashboardSidebar
-    ><UDashboardPanel
-      ><template #header
-        ><UDashboardNavbar title="ThoughtFull"
-          ><template #leading><UDashboardSidebarCollapse /></template
-          ><template #right
-            ><NotificationsBell /></template></UDashboardNavbar></template
-      ><template #body
-        ><main id="main-content"><slot /></main></template></UDashboardPanel
-  ></UDashboardGroup>
+  <div class="min-h-dvh">
+    <UDashboardGroup>
+      <UDashboardSidebar collapsible resizable>
+        <template #header>
+          <AppBrand />
+        </template>
+
+        <UNavigationMenu :items="items" orientation="vertical" />
+
+        <template #footer>
+          <AppUserMenu />
+        </template>
+      </UDashboardSidebar>
+
+      <UDashboardPanel>
+        <template #header>
+          <UDashboardNavbar title="ThoughtFull">
+            <template #leading>
+              <UDashboardSidebarCollapse />
+            </template>
+
+            <template #right>
+              <NotificationsBell />
+            </template>
+          </UDashboardNavbar>
+        </template>
+
+        <template #body>
+          <main id="main-content">
+            <AppTimezoneBanner />
+            <slot />
+          </main>
+        </template>
+      </UDashboardPanel>
+    </UDashboardGroup>
+    <AppIdleWarning />
+  </div>
 </template>

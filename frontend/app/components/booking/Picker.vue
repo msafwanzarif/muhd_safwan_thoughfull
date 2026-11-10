@@ -102,12 +102,13 @@ defineExpose({ refresh });
         :min-value="min"
         :max-value="max"
         :week-starts-on="1"
+        prevent-deselect
         :number-of-months="desktop ? 2 : 1"
         locale="en-GB"
         :fixed-weeks="true"
         :next-month="{ class: 'size-11' }"
         :prev-month="{ class: 'size-11' }"
-        :ui="{ cellTrigger: 'm-0 h-11 w-full' }"
+        :ui="{ cell: 'flex justify-center', cellTrigger: 'm-0 size-11' }"
       >
         <template #day="{ day: date }">
           <span

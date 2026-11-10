@@ -24,6 +24,7 @@ const open = ref(false);
 const error = ref('');
 const conflict = ref(false);
 const booked = ref(false);
+const bookedId = ref('');
 const action =
   useIdempotentAction<components['schemas']['BookingResponseDto']>();
 const withinDay = computed(
@@ -54,9 +55,10 @@ async function submit() {
   };
   error.value = '';
   try {
-    await action.run(body, (key) =>
+    const result = await action.run(body, (key) =>
       api('/api/v1/sessions', { method: 'post', body, idempotencyKey: key }),
     );
+    bookedId.value = result.id;
     booked.value = true;
     open.value = false;
     selected.value = undefined;
@@ -87,7 +89,15 @@ async function chooseAnother() {
       color="success"
       variant="soft"
       title="Your session is booked."
-    />
+      ><template #actions
+        ><UButton
+          :to="{ path: '/sessions', query: { session: bookedId } }"
+          variant="outline"
+          class="min-h-11"
+          >View session</UButton
+        ></template
+      ></UAlert
+    >
     <BookingPicker
       ref="picker"
       v-model="selected"

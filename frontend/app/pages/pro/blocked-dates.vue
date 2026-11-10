@@ -136,7 +136,7 @@ async function remove(id: string, date: string) {
           :number-of-months="desktop ? 2 : 1"
           :disabled="busy"
           locale="en-GB"
-          :ui="{ cellTrigger: 'm-0 h-11 w-full' }"
+          :ui="{ cell: 'flex justify-center', cellTrigger: 'm-0 size-11' }"
           ><template #day="{ day }"
             ><span>{{ day.day }}</span
             ><span

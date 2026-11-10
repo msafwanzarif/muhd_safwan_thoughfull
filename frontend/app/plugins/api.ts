@@ -1,5 +1,6 @@
 import type { paths } from '~/types/api';
-import { toApiError } from '~/utils/api-error';
+import { ApiError, toApiError } from '~/utils/api-error';
+import { broadcastLogout } from '~/utils/activity';
 type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 type Json<T> = T extends { content: { 'application/json': infer Body } }
   ? Body
@@ -22,6 +23,11 @@ export default defineNuxtPlugin({
   setup() {
     const config = useRuntimeConfig();
     const currentUser = useCurrentUser();
+    const authEpoch = useState('auth-epoch', () => 0);
+    const sessionNotice = useState<'' | 'idle' | 'expired'>(
+      'session-notice',
+      () => '',
+    );
     const router = useRouter();
     async function api<
       P extends keyof paths,
@@ -35,8 +41,11 @@ export default defineNuxtPlugin({
         params?: Params<Operation<P, M>>;
         idempotencyKey?: string;
         redirectOnUnauthorized?: boolean;
+        timeout?: number;
       },
     ): Promise<Result<Operation<P, M>>> {
+      // Ignore replies from a session that ended while a request was in flight.
+      const requestEpoch = authEpoch.value;
       let route = String(path).slice('/api/v1'.length);
       for (const [key, value] of Object.entries(options.params ?? {}))
         route = route.replace(
@@ -44,7 +53,7 @@ export default defineNuxtPlugin({
           encodeURIComponent(String(value)),
         );
       try {
-        return await $fetch<Result<Operation<P, M>>>(route, {
+        const result = await $fetch<Result<Operation<P, M>>>(route, {
           baseURL: config.public.apiBase,
           method: options.method,
           credentials: 'include',
@@ -54,11 +63,26 @@ export default defineNuxtPlugin({
             ? { 'Idempotency-Key': options.idempotencyKey }
             : undefined,
           retry: 0,
+          timeout: options.timeout,
         });
+        if (requestEpoch !== authEpoch.value)
+          throw new ApiError(
+            0,
+            'REQUEST_CANCELLED',
+            'Your session changed. Please try again.',
+          );
+        return result;
       } catch (cause) {
         const error = toApiError(cause);
-        if (error.status === 401 && options.redirectOnUnauthorized !== false) {
+        if (
+          error.status === 401 &&
+          options.redirectOnUnauthorized !== false &&
+          requestEpoch === authEpoch.value
+        ) {
+          authEpoch.value++;
           currentUser.value = null;
+          sessionNotice.value = 'expired';
+          broadcastLogout('expired');
           const current = router.currentRoute.value.fullPath;
           if (router.currentRoute.value.path !== '/login')
             await router.push({ path: '/login', query: { redirect: current } });

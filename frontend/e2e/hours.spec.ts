@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('saves whole-week hours, warns about kept sessions and requires timezone replacement ranges', async ({
   page,
-}) => {
+}, info) => {
   let timezone = 'UTC';
   let ranges: { weekday: number; startMinute: number; lengthHours: number }[] =
     [];
@@ -62,6 +62,12 @@ test('saves whole-week hours, warns about kept sessions and requires timezone re
   await expect(
     page.getByRole('button', { name: 'Change time zone' }),
   ).toBeDisabled();
+  page.once('dialog', (dialog) => dialog.dismiss());
+  if (info.project.name === 'mobile')
+    await page.getByRole('button', { name: 'Open sidebar' }).click();
+  await page.getByRole('link', { name: 'Schedule', exact: true }).click();
+  await expect(page).toHaveURL(/\/pro\/hours$/);
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Discard changes' }).click();
   await page.getByRole('button', { name: 'Change time zone' }).click();
   const dialog = page.getByRole('dialog');

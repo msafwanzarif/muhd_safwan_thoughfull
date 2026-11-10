@@ -108,9 +108,9 @@ test('preserves the original on a reschedule conflict, then reschedules and canc
     .click();
   await page.getByRole('button', { name: 'Review new time' }).click();
   await page.getByRole('button', { name: 'Confirm reschedule' }).click();
-  await expect(page.getByRole('alert')).toContainText(
-    'Someone else just booked',
-  );
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Someone else just booked' }),
+  ).toContainText('Someone else just booked');
   expect(session.startAt).toBe(start.toISOString());
   conflict = false;
   await page

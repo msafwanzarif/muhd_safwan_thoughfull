@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('confirms a booking, retains its key on retry and handles slot conflicts', async ({
   page,
-}) => {
+}, info) => {
   const id = '00000000-0000-4000-8000-000000000001';
   const start = new Date(Date.now() + 48 * 60 * 60 * 1000);
   start.setUTCHours(9, 0, 0, 0);
@@ -78,6 +78,11 @@ test('confirms a booking, retains its key on retry and handles slot conflicts', 
     .first()
     .click();
   await page.getByRole('button', { name: '09:00', exact: true }).click();
+  await page.screenshot({
+    path: info.outputPath('booking.png'),
+    animations: 'disabled',
+    fullPage: true,
+  });
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText(
     'You can cancel or reschedule until',
@@ -105,6 +110,33 @@ test('confirms a booking, retains its key on retry and handles slot conflicts', 
   await page.getByRole('button', { name: 'Choose another time' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(keys[2]).not.toBe(keys[1]);
+  conflict = false;
+  const near = new Date(Date.now() + 4 * 3600000);
+  near.setUTCSeconds(0, 0);
+  slot.startAt = near.toISOString();
+  slot.endAt = new Date(near.getTime() + 3000000).toISOString();
+  await page.reload();
+  await page
+    .getByRole('button')
+    .filter({ has: page.locator('[aria-label="Free times"]') })
+    .first()
+    .click();
+  await page
+    .locator('[aria-label="Session times"]')
+    .getByRole('button')
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText(
+    'This session starts in less than 24 hours.',
+  );
+  await page.screenshot({
+    path: info.outputPath('booking-under-24-hours.png'),
+    animations: 'disabled',
+    fullPage: false,
+  });
+  await page.getByRole('button', { name: 'Book anyway', exact: true }).click();
+  await expect(page.getByText('Your session is booked.')).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

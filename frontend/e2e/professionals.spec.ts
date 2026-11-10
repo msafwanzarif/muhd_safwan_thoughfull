@@ -155,9 +155,11 @@ test('filters and paginates with URL history, and recovers from empty and failed
 
   failNext = true;
   await page.getByRole('button', { name: 'Next page', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText(
-    "We couldn't load professionals",
-  );
+  await expect(
+    page
+      .getByRole('alert')
+      .filter({ hasText: "We couldn't load professionals" }),
+  ).toContainText("We couldn't load professionals");
   await page.getByRole('button', { name: 'Try again' }).click();
   await expect(
     page.getByRole('link', { name: 'Alex Example 13', exact: true }),

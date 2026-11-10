@@ -9,6 +9,7 @@ export class ApiError extends Error {
   }
 }
 export function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) return error;
   const value = error as {
     statusCode?: number;
     data?: { code?: string; detail?: string };

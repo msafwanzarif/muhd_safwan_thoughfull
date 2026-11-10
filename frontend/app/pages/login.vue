@@ -5,6 +5,10 @@ import { authMessage } from '~/utils/auth';
 definePageMeta({ layout: 'auth' });
 useHead({ title: 'Log in · ThoughtFull' });
 const auth = useAuth();
+const sessionNotice = useState<'' | 'idle' | 'expired'>(
+  'session-notice',
+  () => '',
+);
 const route = useRoute();
 const state = reactive({ email: '', password: '' });
 const busy = ref(false);
@@ -42,6 +46,17 @@ async function submit() {
   <div>
     <h2 class="text-3xl font-bold">Welcome back</h2>
     <p class="mt-3 text-muted">Log in to see your sessions.</p>
+    <UAlert
+      v-if="sessionNotice"
+      color="info"
+      variant="soft"
+      class="mt-6"
+      :title="
+        sessionNotice === 'idle'
+          ? 'Signed out after 30 minutes without activity. Please log in again.'
+          : 'Your session has ended. Please log in again.'
+      "
+    />
     <UAlert
       v-if="route.query.registered === '1'"
       class="mt-6"

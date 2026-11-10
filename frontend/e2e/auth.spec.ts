@@ -89,6 +89,26 @@ test('signs up, logs in with a cookie, restores the session and logs out', async
       .getByRole('button', { name: /^(Confirm booking|Book anyway)$/ })
       .click();
     await expect(page.getByText('Your session is booked.')).toBeVisible();
+    await page.goto('/sessions');
+    await page.getByRole('button', { name: 'Reschedule', exact: true }).click();
+    await page
+      .locator(
+        '[data-reka-calendar-cell-trigger]:not([data-disabled]):not([data-outside-view])',
+      )
+      .filter({ has: page.locator('[aria-label="Free times"]') })
+      .nth(4)
+      .click();
+    await page
+      .locator('[aria-label="Session times"]')
+      .getByRole('button')
+      .first()
+      .click();
+    await page.getByRole('button', { name: 'Review new time' }).click();
+    await page.getByRole('button', { name: 'Confirm reschedule' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(
+      page.getByText('Your session has been updated.'),
+    ).toBeVisible();
     await page.goto(home);
   }
   const cookie = (await context.cookies()).find(

@@ -14,7 +14,11 @@ const user = useCurrentUser();
     description="These bookings fall outside your new availability. Review your schedule if you need to cancel them."
   >
     <template #description
-      ><ul class="mt-3 space-y-2">
+      ><p>
+        These bookings are outside your new availability. They have not been
+        cancelled; review your schedule if you need to cancel them.
+      </p>
+      <ul class="mt-3 space-y-2">
         <li v-for="session in warnings" :key="session.id">
           <NuxtLink
             :to="{ path: '/pro/schedule', query: { session: session.id } }"

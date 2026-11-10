@@ -25,7 +25,9 @@ const label = computed(() =>
   props.session.status !== 'active'
     ? props.session.status
     : future.value
-      ? 'Upcoming'
+      ? Date.parse(props.session.startAt) <= now.value.getTime()
+        ? 'In progress'
+        : 'Upcoming'
       : 'Completed',
 );
 </script>
@@ -54,6 +56,9 @@ const label = computed(() =>
         label
       }}</UBadge>
     </div>
+    <p class="text-xs text-muted">
+      Booked {{ formatDate(session.createdAt, timezone) }}
+    </p>
     <p v-if="session.reason" class="text-sm">
       Cancellation reason: {{ session.reason }}
     </p>

@@ -28,6 +28,11 @@
 }
 :root {
   --ui-primary: #03367e;
+  --ui-secondary: #2d7f7a;
+  --ui-info: #03367e;
+  --ui-success: #2d7f7a;
+  --ui-warning: #7a2e0e;
+  --ui-error: #b42318;
   --ui-bg: #f4f8fa;
   --ui-bg-elevated: #fff;
   --ui-bg-muted: #eaf0f8;
@@ -40,6 +45,11 @@
 }
 .dark {
   --ui-primary: #9ec2f0;
+  --ui-secondary: #5fd4c0;
+  --ui-info: #9ec2f0;
+  --ui-success: #5fd4c0;
+  --ui-warning: #f5cf7a;
+  --ui-error: #ffb4ab;
   --ui-bg: #0e1a22;
   --ui-bg-elevated: #15242e;
   --ui-bg-muted: #1d3240;

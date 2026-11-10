@@ -30,6 +30,9 @@
         </div>
       </div>
     </header>
-    <main id="main-content" class="mx-auto max-w-7xl px-6 py-10"><slot /></main>
+    <main id="main-content" class="mx-auto max-w-7xl px-6 py-10">
+      <AppTimezoneBanner /><slot />
+    </main>
+    <AppIdleWarning />
   </div>
 </template>

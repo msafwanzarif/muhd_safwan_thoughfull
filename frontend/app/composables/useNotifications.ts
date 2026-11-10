@@ -9,7 +9,8 @@ export const useNotifications = createSharedComposable(() => {
   const user = useCurrentUser();
   const visibility = useDocumentVisibility();
   const focused = useWindowFocus();
-  const { idle } = useIdle(60000);
+  const activity = useHumanActivity();
+  const idle = activity.pollPaused;
   const items = ref<Notification[]>([]);
   const unread = ref(0);
   const cursor = ref<string | null>(null);
@@ -126,7 +127,7 @@ export const useNotifications = createSharedComposable(() => {
     if (
       user.value &&
       visibility.value === 'visible' &&
-      !idle.value &&
+      Date.now() - activity.lastActive.value < 60000 &&
       !saving.value
     )
       void refresh();
