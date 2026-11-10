@@ -27,6 +27,7 @@
   --color-teal-brand-950: #09221f;
 }
 :root {
+  --notification-unread-bg: #f1f6fc;
   --ui-primary: #03367e;
   --ui-secondary: #2d7f7a;
   --ui-info: #03367e;
@@ -44,6 +45,7 @@
   --brand-hero: #e8f7f4;
 }
 .dark {
+  --notification-unread-bg: #203650;
   --ui-primary: #9ec2f0;
   --ui-secondary: #5fd4c0;
   --ui-info: #9ec2f0;

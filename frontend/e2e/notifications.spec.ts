@@ -80,6 +80,11 @@ test('loads notification history, marks it read and links to the session', async
   await expect(
     page.getByRole('status').filter({ hasText: '2 unread' }),
   ).toHaveText('2 unread');
+  const unreadRow = page.locator('.notification-unread').first();
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(unreadRow).toHaveCSS('background-color', 'rgb(32, 54, 80)');
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(unreadRow).toHaveCSS('background-color', 'rgb(241, 246, 252)');
   await page.getByRole('button', { name: 'Load more' }).click();
   await expect(
     page.getByRole('button', { name: 'View session', exact: true }),

@@ -133,10 +133,7 @@ async function openSession() {
   border-bottom: 0;
 }
 .notification-unread {
-  background: #f1f6fc;
-}
-:global(.dark) .notification-unread {
-  background: var(--ui-bg-muted);
+  background: var(--notification-unread-bg);
 }
 .notification-icon {
   display: flex;
