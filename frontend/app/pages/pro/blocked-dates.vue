@@ -83,6 +83,17 @@ const min = computed(() =>
   calendarDateInZone(now.value, user.value?.timezone ?? 'UTC'),
 );
 const month = shallowRef<DateValue>(min.value);
+function inMonth(date: DateValue, offset: number) {
+  const displayed = month.value.add({ months: offset });
+  return date.year === displayed.year && date.month === displayed.month;
+}
+
+function selectMonth(value: DateValue[] | undefined, offset: number) {
+  selected.value = [
+    ...selected.value.filter((date) => !inMonth(date, offset)),
+    ...(value ?? []),
+  ].sort((a, b) => a.compare(b));
+}
 const upcoming = computed(
   () =>
     data.value?.items.filter(
@@ -197,7 +208,7 @@ async function remove(id: string, date: string) {
             <UCalendar
               v-for="offset in desktop ? [0, 1] : [0]"
               :key="offset"
-              v-model="selected"
+              :model-value="selected.filter((date) => inMonth(date, offset))"
               :class="offset ? 'second-month' : 'first-month'"
               :placeholder="month.add({ months: offset })"
               multiple
@@ -221,6 +232,9 @@ async function remove(id: string, date: string) {
                 headCell: 'text-xs text-muted',
               }"
               @update:placeholder="month = $event.subtract({ months: offset })"
+              @update:model-value="
+                selectMonth(Array.isArray($event) ? $event : [], offset)
+              "
             >
               <template #day="{ day }"
                 ><span

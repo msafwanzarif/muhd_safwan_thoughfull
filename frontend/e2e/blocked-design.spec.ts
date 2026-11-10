@@ -60,6 +60,32 @@ test('shows blocked and non-working dates without overflow', async ({
   await expect(
     page.locator('[data-value="2026-11-25"]').first(),
   ).toHaveAttribute('data-disabled');
+  const firstMonth = page.locator('.first-month');
+  await firstMonth.locator('[data-value="2026-11-16"]').click();
+  await expect(firstMonth.locator('[data-slot="headingLabel"]')).toHaveText(
+    'November 2026',
+  );
+  if (!mobile) {
+    const secondMonth = page.locator('.second-month');
+    await expect(secondMonth.locator('[data-slot="headingLabel"]')).toHaveText(
+      'December 2026',
+    );
+    await secondMonth.locator('[data-value="2026-12-24"]').click();
+    await firstMonth.locator('[data-value="2026-11-17"]').click();
+    await expect(firstMonth.locator('[data-slot="headingLabel"]')).toHaveText(
+      'November 2026',
+    );
+    await expect(secondMonth.locator('[data-slot="headingLabel"]')).toHaveText(
+      'December 2026',
+    );
+    await expect(
+      page.getByRole('button', { name: 'Remove 2026-12-24 from selection' }),
+    ).toBeVisible();
+  }
+  await firstMonth.locator('[data-value="2026-11-16"]').click();
+  await expect(firstMonth.locator('[data-slot="headingLabel"]')).toHaveText(
+    'November 2026',
+  );
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: info.outputPath('blocked-design.png'),
