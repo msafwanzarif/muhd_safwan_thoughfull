@@ -17,6 +17,9 @@ const { workingHours } = require('../dist/database/schema');
 const { SlotsModule } = require('../dist/slots/slots.module');
 const { BookingsModule } = require('../dist/bookings/bookings.module');
 const {
+  AvailabilityModule,
+} = require('../dist/availability/availability.module');
+const {
   NotificationsModule,
 } = require('../dist/notifications/notifications.module');
 const {
@@ -57,6 +60,7 @@ async function main() {
         ProfessionalsModule,
         SlotsModule,
         BookingsModule,
+        AvailabilityModule,
         NotificationsModule,
       ],
     }).compile();
