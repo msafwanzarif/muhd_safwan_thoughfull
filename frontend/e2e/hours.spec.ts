@@ -44,6 +44,12 @@ test('saves whole-week hours, warns about kept sessions and requires timezone re
     ranges = route.request().postDataJSON().ranges;
     return route.fulfill({ json: { timezone, ranges, warnings: [] } });
   });
+  await page.route('**/api/v1/sessions/*', (route) =>
+    route.fulfill({
+      status: 404,
+      json: { code: 'NOT_FOUND', detail: 'Session not found' },
+    }),
+  );
   await page.goto('/pro/hours');
   await page
     .getByRole('button', { name: 'Add Monday range', exact: true })

@@ -148,6 +148,14 @@ test('blocks selected local dates atomically and unblocks a date', async ({
     dates = dates.filter((date) => date.id !== id);
     return route.fulfill({ status: 204 });
   });
+  await page.route('**/api/v1/working-hours', (route) =>
+    route.fulfill({ json: { timezone: 'UTC', ranges: [] } }),
+  );
+  await page.route(/\/api\/v1\/sessions(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      json: { items: [], total: 0, totalPages: 0, page: 1, pageSize: 100 },
+    }),
+  );
   await page.goto('/pro/blocked-dates');
   const days = page.locator(
     '[data-value]:not([data-disabled]):not([data-outside-view])',
