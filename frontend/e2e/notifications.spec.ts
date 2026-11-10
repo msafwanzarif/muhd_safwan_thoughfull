@@ -76,10 +76,10 @@ test('loads notification history, marks it read and links to the session', async
   await expect(
     page.getByRole('heading', { name: /^Session booked/ }),
   ).toBeVisible();
-  await expect(page.getByText('Reason: Plans changed')).toBeVisible();
+  await expect(page.getByText(/Plans changed/)).toBeVisible();
   await expect(
     page.getByRole('status').filter({ hasText: '2 unread' }),
-  ).toBeVisible();
+  ).toHaveText('2 unread');
   await page.getByRole('button', { name: 'Load more' }).click();
   await expect(
     page.getByRole('button', { name: 'View session', exact: true }),
@@ -87,7 +87,7 @@ test('loads notification history, marks it read and links to the session', async
   await page.getByRole('button', { name: 'Mark all as read' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: '0 unread' }),
-  ).toBeVisible();
+  ).toHaveText('0 unread');
   await page
     .getByRole('button', { name: 'View session', exact: true })
     .first()

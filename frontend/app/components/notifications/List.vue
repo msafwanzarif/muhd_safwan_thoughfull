@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ compact?: boolean }>();
+defineProps<{ compact?: boolean; title?: string }>();
 const {
   items,
   unread,
@@ -16,10 +16,16 @@ const {
 <template>
   <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <p role="status" class="text-sm text-muted">{{ unread }} unread</p>
+      <h1
+        v-if="title"
+        class="text-2xl leading-8 font-bold lg:text-3xl lg:leading-10"
+      >
+        {{ title }}
+      </h1>
+      <p role="status" class="sr-only">{{ unread }} unread</p>
       <UButton
-        variant="link"
-        class="min-h-11"
+        variant="outline"
+        class="ml-auto min-h-11 justify-center"
         :disabled="!unread || saving"
         :loading="saving"
         @click="markAll"
@@ -43,11 +49,16 @@ const {
       class="h-40 rounded-xl"
       aria-label="Loading notifications"
     />
-    <NotificationsItem
-      v-for="item in compact ? items.slice(0, 3) : items"
-      :key="item.id"
-      :notification="item"
-    />
+    <div
+      v-if="items.length"
+      class="overflow-hidden rounded-2xl border border-default"
+    >
+      <NotificationsItem
+        v-for="item in compact ? items.slice(0, 3) : items"
+        :key="item.id"
+        :notification="item"
+      />
+    </div>
     <UEmpty
       v-if="!loading && !error && !items.length"
       icon="i-lucide-bell"
@@ -58,7 +69,7 @@ const {
       v-if="!compact && cursor"
       block
       variant="outline"
-      class="min-h-11"
+      class="mx-auto min-h-11 justify-center lg:w-auto"
       :loading="loading"
       :disabled="loading"
       @click="more"
