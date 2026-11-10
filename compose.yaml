@@ -1,6 +1,7 @@
 services:
   api:
-    build:
+    image: thoughtfull-api
+    build: &backend-build
       context: .
       dockerfile: backend/Dockerfile
     ports: ['3000:3000']
@@ -13,6 +14,26 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+  migrate:
+    image: thoughtfull-api
+    build: *backend-build
+    command: ['npm', 'run', 'db:migrate']
+    environment:
+      DATABASE_URL: postgresql://thoughtfull:thoughtfull@postgres:5432/thoughtfull
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: 'no'
+  frontend:
+    image: thoughtfull-frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE: http://localhost:3000/api/v1
+    ports: ['3001:3001']
+    depends_on:
+      api: { condition: service_started }
   postgres:
     image: postgres:18-alpine
     environment:

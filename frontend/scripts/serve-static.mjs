@@ -45,4 +45,4 @@ createServer(async (req, res) => {
     res.writeHead(500);
     res.end();
   }
-}).listen(3011, '127.0.0.1');
+}).listen(Number(process.env.PORT ?? 3011), process.env.HOST ?? '127.0.0.1');
