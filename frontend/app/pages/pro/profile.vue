@@ -2,7 +2,7 @@
 import type { FormError } from '@nuxt/ui';
 import type { components } from '~/types/api';
 import { specialisations, languages } from '~/utils/auth';
-import { timezoneLabel } from '~/utils/professionals';
+import { timezoneCity } from '~/utils/professionals';
 import { problemMessage } from '~/utils/problem';
 
 definePageMeta({ layout: 'professional' });
@@ -83,15 +83,17 @@ async function save() {
 </script>
 
 <template>
-  <section class="space-y-6">
-    <h1 class="text-3xl font-bold">My profile</h1>
-    <p class="text-muted">
-      Based in {{ timezoneLabel(user?.timezone ?? 'UTC') }}. Your city comes
-      from your saved time zone.
-    </p>
-    <UButton to="/pro/hours" variant="outline" class="min-h-11"
-      >Change time zone and hours</UButton
-    >
+  <section class="profile-page">
+    <header>
+      <h1 class="text-2xl leading-8 font-bold lg:text-3xl lg:leading-10">
+        My profile
+      </h1>
+      <p
+        class="mt-1 text-[13px] leading-[19px] text-muted lg:text-sm lg:leading-5"
+      >
+        Members see this when they choose who to book with.
+      </p>
+    </header>
     <UAlert
       v-if="success"
       role="status"
@@ -99,68 +101,94 @@ async function save() {
       title="Profile updated."
     />
     <UAlert v-if="error" role="alert" color="error" :title="error" />
-    <div class="grid items-start gap-6 xl:grid-cols-2">
+    <div class="profile-layout">
       <UForm
         :state="state"
         :validate="validate"
-        class="space-y-6 rounded-2xl border border-default bg-(--brand-surface) p-6"
+        class="profile-form space-y-5"
         @submit="save"
       >
-        <fieldset :disabled="busy" class="space-y-6">
+        <fieldset :disabled="busy" class="profile-fields">
           <UFormField name="name" label="Full name" required
             ><UInput
               v-model="state.name"
               maxlength="100"
               autocomplete="name"
               class="w-full"
-              :ui="{ base: 'min-h-11' }"
+              :ui="{
+                base: 'min-h-11 rounded-[10px] bg-(--brand-surface) ring-default',
+              }"
           /></UFormField>
-          <UFormField name="title" label="Professional title" required
+          <UFormField name="title" label="Title" required
             ><UInput
               v-model="state.title"
               maxlength="100"
               class="w-full"
-              :ui="{ base: 'min-h-11' }"
+              :ui="{
+                base: 'min-h-11 rounded-[10px] bg-(--brand-surface) ring-default',
+              }"
           /></UFormField>
-          <UFormField name="bio" label="About you" required
+          <div class="profile-wide">
+            <UFormField label="Based in"
+              ><UInput
+                :model-value="timezoneCity(user?.timezone ?? 'UTC')"
+                readonly
+                class="w-full"
+                :ui="{
+                  base: 'min-h-11 rounded-[10px] bg-(--brand-surface) ring-default',
+                }"
+            /></UFormField>
+            <p class="mt-1.5 text-xs text-muted">
+              Your city follows your time zone, set on
+              <NuxtLink to="/pro/hours" class="text-primary underline"
+                >Working hours</NuxtLink
+              >.
+            </p>
+          </div>
+          <UFormField name="bio" label="Short bio" class="profile-wide" required
             ><UTextarea
               v-model="state.bio"
               maxlength="2000"
-              :rows="6"
+              :rows="4"
+              :ui="{ base: 'rounded-[10px] bg-(--brand-surface) ring-default' }"
               class="w-full"
           /></UFormField>
-          <fieldset>
-            <legend class="mb-3 font-semibold">Specialisations</legend>
+          <fieldset class="profile-wide">
+            <legend class="mb-2 text-sm">Specialisations</legend>
             <AppChipToggleGroup
               v-model="state.specialisations"
               :items="specialisations"
             />
           </fieldset>
           <fieldset>
-            <legend class="mb-3 font-semibold">Languages</legend>
+            <legend class="mb-3 font-semibold">
+              Languages you offer sessions in
+            </legend>
             <AppChipToggleGroup v-model="state.languages" :items="languages" />
           </fieldset>
         </fieldset>
-        <div class="flex flex-wrap gap-3">
+        <div class="profile-actions">
           <UButton
             type="submit"
-            class="min-h-11"
+            class="profile-save min-h-11 justify-center font-bold"
             :loading="busy"
             :disabled="busy || !dirty"
             >Save profile</UButton
           ><UButton
             variant="outline"
-            class="min-h-11"
+            class="profile-discard min-h-11 justify-center"
             :disabled="busy || !dirty"
             @click="user && apply(user)"
             >Discard changes</UButton
           >
         </div>
       </UForm>
-      <aside class="space-y-4">
-        <h2 class="text-lg font-bold">How members see you</h2>
+      <aside class="profile-preview space-y-2">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">
+          How members see you
+        </h2>
         <ProfessionalsCard :professional="preview" preview />
-        <p class="whitespace-pre-line text-muted">{{ state.bio }}</p>
+
         <UAlert
           v-if="hours.error.value"
           color="warning"
@@ -175,3 +203,86 @@ async function save() {
     </div>
   </section>
 </template>
+
+<style scoped>
+.profile-page {
+  display: grid;
+  gap: 16px;
+}
+.profile-layout {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+.profile-form {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  background: var(--brand-surface);
+}
+.profile-fields {
+  display: grid;
+  gap: 16px;
+}
+.profile-preview {
+  min-width: 0;
+  grid-row: 1;
+}
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-discard {
+  order: 2;
+}
+.profile-form :deep([aria-pressed]) {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #c9d6dc;
+  box-shadow: none;
+  background: var(--brand-surface);
+  color: var(--ui-text);
+}
+.profile-form :deep([aria-pressed='true']) {
+  border-color: var(--ui-primary);
+  background: var(--ui-bg-muted);
+  color: var(--ui-primary);
+}
+@media (min-width: 1024px) {
+  .profile-page {
+    gap: 20px;
+    margin-right: -16px;
+  }
+  .profile-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 20px;
+  }
+  .profile-form {
+    padding: 24px;
+  }
+  .profile-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+  }
+  .profile-wide {
+    grid-column: 1 / -1;
+  }
+  .profile-preview {
+    grid-row: auto;
+  }
+  .profile-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    border-top: 1px solid var(--ui-border);
+    padding-top: 18px;
+  }
+  .profile-discard {
+    order: 0;
+  }
+  .profile-save {
+    order: 1;
+  }
+}
+</style>

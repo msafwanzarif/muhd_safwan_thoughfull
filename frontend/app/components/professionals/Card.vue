@@ -11,6 +11,7 @@ defineProps<{ professional: Professional; preview?: boolean }>();
 
 <template>
   <article
+    :class="preview ? 'gap-6 p-6' : ''"
     class="relative flex h-full flex-col gap-5 rounded-2xl border border-default bg-(--brand-surface) p-5 transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-primary"
   >
     <div class="flex items-start gap-3">
@@ -18,13 +19,15 @@ defineProps<{ professional: Professional; preview?: boolean }>();
         :alt="professional.name"
         size="xl"
         :ui="{
-          root: 'shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
-          fallback:
-            'font-semibold text-indigo-brand-600 dark:text-teal-brand-200',
+          root: `${preview ? 'size-15' : ''} shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800`,
+          fallback: `${preview ? 'text-2xl' : ''} font-semibold text-indigo-brand-600 dark:text-teal-brand-200`,
         }"
       />
       <div class="min-w-0">
-        <h2 class="text-base font-bold">
+        <h2
+          class="font-bold wrap-anywhere"
+          :class="preview ? 'text-xl' : 'text-base'"
+        >
           <span v-if="preview">{{ professional.name }}</span>
           <NuxtLink
             v-else
@@ -39,6 +42,12 @@ defineProps<{ professional: Professional; preview?: boolean }>();
         </p>
       </div>
     </div>
+    <p
+      v-if="preview && professional.bio"
+      class="whitespace-pre-line leading-relaxed wrap-anywhere"
+    >
+      {{ professional.bio }}
+    </p>
     <div
       v-if="professional.specialisations.length"
       class="flex flex-wrap gap-2"

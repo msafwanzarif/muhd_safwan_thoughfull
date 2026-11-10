@@ -13,7 +13,7 @@ const initial = {
 
 test('edits a professional profile and previews the member-facing card', async ({
   page,
-}) => {
+}, info) => {
   let account = { ...initial };
   await page.route('**/api/v1/users/me', (route) => {
     if (route.request().method() === 'PATCH')
@@ -33,6 +33,16 @@ test('edits a professional profile and previews the member-facing card', async (
   await page.goto('/pro/profile');
   await page.getByLabel('Full name', { exact: true }).fill('Taylor Example');
   await page.getByRole('button', { name: 'Malay', exact: true }).click();
+  await page
+    .getByLabel('Short bio', { exact: true })
+    .fill('A calm space to talk.');
+  const preview = page.locator('aside');
+  await expect(preview.getByText('A calm space to talk.')).toBeVisible();
+  const bio = await preview.getByText('A calm space to talk.').boundingBox();
+  const specialisation = await preview
+    .getByText('Anxiety', { exact: true })
+    .boundingBox();
+  expect(bio!.y + bio!.height).toBeLessThanOrEqual(specialisation!.y);
   await expect(
     page.getByRole('heading', { name: 'Taylor Example', exact: true }),
   ).toBeVisible();
@@ -40,6 +50,12 @@ test('edits a professional profile and previews the member-facing card', async (
   await expect(page.getByText('Profile updated.')).toBeVisible();
   expect(account.name).toBe('Taylor Example');
   expect(account.languages).toEqual(['en', 'ms']);
+  expect(account.bio).toBe('A calm space to talk.');
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({
+    path: info.outputPath('profile.png'),
+    animations: 'disabled',
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
