@@ -24,6 +24,7 @@ export default defineNuxtPlugin({
     const config = useRuntimeConfig();
     const currentUser = useCurrentUser();
     const authEpoch = useState('auth-epoch', () => 0);
+    const loggingOut = useState('auth-logging-out', () => false);
     const sessionNotice = useState<'' | 'idle' | 'expired'>(
       'session-notice',
       () => '',
@@ -76,6 +77,8 @@ export default defineNuxtPlugin({
         const error = toApiError(cause);
         if (
           error.status === 401 &&
+          !loggingOut.value &&
+          !!currentUser.value &&
           options.redirectOnUnauthorized !== false &&
           requestEpoch === authEpoch.value
         ) {

@@ -15,6 +15,7 @@ export default defineNuxtPlugin({
     const user = useCurrentUser();
     const router = useRouter();
     const authEpoch = useState('auth-epoch', () => 0);
+    const loggingOut = useState('auth-logging-out', () => false);
     const sessionNotice = useState<'' | 'idle' | 'expired'>(
       'session-notice',
       () => '',
@@ -86,6 +87,7 @@ export default defineNuxtPlugin({
       options: { force?: boolean; idle?: boolean; redirect?: boolean } = {},
     ): Promise<void> {
       if (logoutPending) return logoutPending;
+      loggingOut.value = true;
       logoutPending = (async () => {
         const revoke = api('/api/v1/auth/logout', {
           method: 'post',
@@ -118,6 +120,7 @@ export default defineNuxtPlugin({
           if (options.redirect !== false) await router.replace('/login');
         }
       })().finally(() => {
+        loggingOut.value = false;
         logoutPending = undefined;
       });
       return logoutPending;
