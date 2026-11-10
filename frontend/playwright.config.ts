@@ -17,14 +17,18 @@ export default defineConfig({
     },
   ],
   webServer: [
-    {
-      command:
-        'npm run build -w backend && node backend/scripts/serve-auth-test-api.cjs',
-      cwd: '..',
-      url: 'http://127.0.0.1:3012/api/v1/auth/me',
-      timeout: 120000,
-      reuseExistingServer: false,
-    },
+    ...(process.env.PLAYWRIGHT_SKIP_API === '1'
+      ? []
+      : [
+          {
+            command:
+              'npm run build -w backend && node backend/scripts/serve-auth-test-api.cjs',
+            cwd: '..',
+            url: 'http://127.0.0.1:3012/api/v1/auth/me',
+            timeout: 120000,
+            reuseExistingServer: false,
+          },
+        ]),
     {
       command: 'npm run preview:test',
       env: { NUXT_PUBLIC_API_BASE: 'http://127.0.0.1:3012/api/v1' },

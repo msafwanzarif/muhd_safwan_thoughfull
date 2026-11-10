@@ -74,6 +74,21 @@ test('signs up, logs in with a cookie, restores the session and logs out', async
     await expect(
       page.getByRole('heading', { name: 'Directory Example 13', exact: true }),
     ).toBeVisible();
+    await page
+      .getByRole('button')
+      .filter({ has: page.locator('[aria-label="Free times"]') })
+      .nth(2)
+      .click();
+    await page
+      .locator('[aria-label="Session times"]')
+      .getByRole('button')
+      .first()
+      .click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page
+      .getByRole('button', { name: /^(Confirm booking|Book anyway)$/ })
+      .click();
+    await expect(page.getByText('Your session is booked.')).toBeVisible();
     await page.goto(home);
   }
   const cookie = (await context.cookies()).find(

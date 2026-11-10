@@ -14,6 +14,8 @@ const {
 } = require('../dist/professionals/professionals.module');
 const { AuthService } = require('../dist/auth/auth.service');
 const { workingHours } = require('../dist/database/schema');
+const { SlotsModule } = require('../dist/slots/slots.module');
+const { BookingsModule } = require('../dist/bookings/bookings.module');
 const {
   DatabaseModule,
   DatabaseService,
@@ -50,6 +52,8 @@ async function main() {
         AuthModule,
         UsersModule,
         ProfessionalsModule,
+        SlotsModule,
+        BookingsModule,
       ],
     }).compile();
     app = module.createNestApplication();
