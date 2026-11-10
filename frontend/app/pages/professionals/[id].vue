@@ -64,7 +64,15 @@ useHead({
         class="space-y-6 rounded-2xl border border-default bg-(--brand-surface) p-6"
       >
         <div class="flex items-start gap-4">
-          <UAvatar :alt="data.name" size="3xl" />
+          <UAvatar
+            :alt="data.name"
+            size="3xl"
+            :ui="{
+              root: 'size-18 shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
+              fallback:
+                'text-3xl font-semibold text-indigo-brand-600 dark:text-teal-brand-200',
+            }"
+          />
           <div>
             <h1 class="text-3xl font-bold">{{ data.name }}</h1>
             <p class="mt-2 text-muted">

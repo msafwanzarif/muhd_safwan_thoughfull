@@ -44,7 +44,15 @@ const label = computed(() =>
   >
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex items-start gap-3">
-        <UAvatar :alt="participant.name" size="lg" />
+        <UAvatar
+          :alt="participant.name"
+          size="lg"
+          :ui="{
+            root: 'shrink-0 bg-teal-brand-200 dark:bg-teal-brand-800',
+            fallback:
+              'font-semibold text-indigo-brand-600 dark:text-teal-brand-200',
+          }"
+        />
         <div>
           <h2 class="font-bold">{{ participant.name }}</h2>
           <p class="mt-1 text-sm">
