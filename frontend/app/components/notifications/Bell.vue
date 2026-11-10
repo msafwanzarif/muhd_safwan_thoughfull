@@ -1,4 +1,5 @@
 <script setup lang="ts">
+defineProps<{ compact?: boolean }>();
 const user = useCurrentUser();
 const { unread, refresh } = useNotifications();
 const desktop = useMediaQuery('(min-width: 1024px)');
@@ -49,7 +50,11 @@ watch(open, (value) => {
     :aria-label="`Notifications, ${unread} unread`"
     ><span
       v-if="unread"
-      class="absolute -top-1 -right-1 rounded-full bg-primary px-1.5 text-xs text-inverted"
+      :class="
+        compact
+          ? 'absolute top-1 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#b42318] px-1 text-[11px] text-white'
+          : 'absolute -top-1 -right-1 rounded-full bg-primary px-1.5 text-xs text-inverted'
+      "
       >{{ unread > 99 ? '99+' : unread }}</span
     ></UButton
   >

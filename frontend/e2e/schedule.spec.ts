@@ -102,7 +102,10 @@ test('shows a professional schedule and allows cancellation inside 24 hours', as
     page.getByRole('heading', { name: 'Sam Example' }),
   ).toBeVisible();
   await page
-    .getByRole('button', { name: 'Cancel session', exact: true })
+    .getByRole('button', {
+      name: 'Cancel session with Sam Example',
+      exact: true,
+    })
     .click();
   await expect(page.getByRole('dialog')).toContainText(
     'You can cancel at any time',
