@@ -7,9 +7,18 @@ localhost. PostgreSQL and Redis have no published ports.
 
 ## Releases
 
-Pushes to `main` and manual runs of **Deploy dev** build images on GitHub,
+Pushed tags starting with `deploy` and manual runs of **Deploy dev** build images on GitHub,
 transfer them over SSH, back up the database, migrate, restart the app, and check
 both services locally. Brief downtime is possible. Demo data is not seeded.
+
+To deploy a commit:
+
+```sh
+git tag deploy-2026-11-10-1
+git push origin deploy-2026-11-10-1
+```
+
+Use a new tag name for each deployment. Branch pushes do not trigger deployment.
 
 GitHub requires the `DEPLOY_HOST` variable and the `DEPLOY_SSH_KEY` and
 `DEPLOY_KNOWN_HOSTS` secrets. The dedicated Actions key has root access to this
@@ -35,7 +44,7 @@ backups off-server and monitor disk usage. No paid backup service is enabled.
 Never run `docker compose down -v` against this stack unless data deletion is
 intended.
 
-To roll back code, revert the change in Git and push to `main`. Database
+To roll back code, tag the desired commit with a new `deploy` tag and push that tag. Database
 migrations are not reversed automatically; incompatible migrations may require
 a database restore and downtime.
 
