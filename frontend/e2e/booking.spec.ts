@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { mockEmptyNotifications } from './helpers/notifications';
 
 test('confirms a booking, retains its key on retry and handles slot conflicts', async ({
   page,
 }, info) => {
   const id = '00000000-0000-4000-8000-000000000001';
+  await mockEmptyNotifications(page);
   const start = new Date(Date.now() + 48 * 60 * 60 * 1000);
   start.setUTCHours(9, 0, 0, 0);
   const end = new Date(start.getTime() + 50 * 60 * 1000);

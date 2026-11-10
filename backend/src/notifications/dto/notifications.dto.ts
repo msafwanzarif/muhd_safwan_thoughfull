@@ -45,13 +45,15 @@ export class NotificationResponseDto {
       'reminder_1h',
       'session_cancelled',
       'session_rescheduled',
+      'session_booked',
     ],
   })
   type!:
     | 'reminder_24h'
     | 'reminder_1h'
     | 'session_cancelled'
-    | 'session_rescheduled';
+    | 'session_rescheduled'
+    | 'session_booked';
 
   @ApiProperty({ format: 'uuid' }) sessionId!: string;
 

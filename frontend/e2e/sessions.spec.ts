@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { mockEmptyNotifications } from './helpers/notifications';
 
 test('preserves the original on a reschedule conflict, then reschedules and cancels', async ({
   page,
 }) => {
   const professionalId = '00000000-0000-4000-8000-000000000001';
+  await mockEmptyNotifications(page);
   const member = { id: 'm', name: 'Sam Example', timezone: 'UTC' };
   const professional = {
     id: professionalId,

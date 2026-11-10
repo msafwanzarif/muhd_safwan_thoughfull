@@ -683,7 +683,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "reminder_24h" | "reminder_1h" | "session_cancelled" | "session_rescheduled";
+            type: "reminder_24h" | "reminder_1h" | "session_cancelled" | "session_rescheduled" | "session_booked";
             /** Format: uuid */
             sessionId: string;
             data: components["schemas"]["NotificationDataDto"];

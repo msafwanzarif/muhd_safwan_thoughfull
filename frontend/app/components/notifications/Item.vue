@@ -17,6 +17,7 @@ const title = computed(
       reminder_1h: 'Your session is in 1 hour',
       session_cancelled: 'Session cancelled',
       session_rescheduled: 'Session rescheduled',
+      session_booked: 'Session booked',
     })[props.notification.type],
 );
 
@@ -41,9 +42,11 @@ async function openSession() {
     <div class="flex items-start gap-3">
       <UIcon
         :name="
-          notification.type.startsWith('reminder')
-            ? 'i-lucide-bell'
-            : 'i-lucide-calendar-clock'
+          notification.type === 'session_booked'
+            ? 'i-lucide-calendar-check'
+            : notification.type.startsWith('reminder')
+              ? 'i-lucide-bell'
+              : 'i-lucide-calendar-clock'
         "
         class="mt-1 size-5 shrink-0 text-primary"
       />

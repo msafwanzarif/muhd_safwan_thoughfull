@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockEmptyNotifications } from './helpers/notifications';
 
 test('signs up, logs in with a cookie, restores the session and logs out', async ({
   page,
@@ -107,7 +108,7 @@ test('signs up, logs in with a cookie, restores the session and logs out', async
     await page.getByRole('button', { name: 'Confirm reschedule' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(
-      page.getByText('Your session has been updated.'),
+      page.getByText('Your session has been updated.', { exact: true }),
     ).toBeVisible();
     await page.goto(home);
   }
@@ -152,6 +153,7 @@ test('retries an uncertain signup with the same key and handles an expired sessi
   page,
 }) => {
   let signedIn = false;
+  await mockEmptyNotifications(page);
   const keys: string[] = [];
   await page.route('**/api/v1/users/me', (route) =>
     route.fulfill({

@@ -22,6 +22,7 @@ export const notificationType = pgEnum('notification_type', [
   'reminder_1h',
   'session_cancelled',
   'session_rescheduled',
+  'session_booked',
 ]);
 
 export const idempotencyStatus = pgEnum('idempotency_status', [

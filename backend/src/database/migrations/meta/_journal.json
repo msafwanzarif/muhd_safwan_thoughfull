@@ -22,6 +22,13 @@
       "when": 1794236217943,
       "tag": "0002_signup_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794281886547,
+      "tag": "0003_session_booked_notification",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@ test('loads notification history, marks it read and links to the session', async
   let unread = 2;
   const notification = (index: number) => ({
     id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
-    type: index === 2 ? 'session_cancelled' : 'reminder_1h',
+    type: index === 2 ? 'session_cancelled' : 'session_booked',
     sessionId,
     data: {
       participantName: 'Alex Example',
@@ -56,6 +56,23 @@ test('loads notification history, marks it read and links to the session', async
     });
   });
   await page.goto(path);
+  await page.route('**/api/v1/working-hours', (route) =>
+    route.fulfill({ json: { timezone: 'UTC', ranges: [] } }),
+  );
+  await page.route(/\/api\/v1\/sessions(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      json: { items: [], page: 1, pageSize: 12, total: 0, totalPages: 0 },
+    }),
+  );
+  await page.route(`**/api/v1/sessions/${sessionId}`, (route) =>
+    route.fulfill({
+      status: 404,
+      json: { code: 'NOT_FOUND', detail: 'Session not found' },
+    }),
+  );
+  await expect(
+    page.getByRole('heading', { name: /^Session booked/ }),
+  ).toBeVisible();
   await expect(page.getByText('Reason: Plans changed')).toBeVisible();
   await expect(
     page.getByRole('status').filter({ hasText: '2 unread' }),

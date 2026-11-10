@@ -18,6 +18,7 @@ import { BookingsModule } from '../src/bookings/bookings.module';
 import { BookingsService } from '../src/bookings/bookings.service';
 import { IdempotencyService } from '../src/common/idempotency/idempotency.service';
 import { setupSwagger } from '../src/config/swagger';
+import { NotificationsModule } from '../src/notifications/notifications.module';
 
 it('books real slots exactly once and rejects concurrent professional/member overlaps', async () => {
   const pg = await new PostgreSqlContainer('postgres:18-alpine').start();
@@ -36,6 +37,7 @@ it('books real slots exactly once and rejects concurrent professional/member ove
       DatabaseModule,
       AuthModule,
       BookingsModule,
+      NotificationsModule,
     ],
   }).compile();
   const app = module.createNestApplication();
@@ -128,6 +130,16 @@ it('books real slots exactly once and rejects concurrent professional/member ove
     const replay = await retry();
     expect(replay.status).toBe(201);
     expect(replay.body).toEqual(pair[0].body);
+    const bookedNotifications = await database.pool.query(
+      "SELECT recipient_id, data FROM notifications WHERE session_id=$1 AND type='session_booked'",
+      [pair[0].body.id],
+    );
+    expect(bookedNotifications.rows).toEqual([
+      {
+        recipient_id: accounts[2].id,
+        data: { participantName: 'Test', startAt: pair[0].body.startAt },
+      },
+    ]);
     await api
       .post('/api/v1/sessions')
       .set('Authorization', 'Bearer ' + token)
@@ -210,6 +222,10 @@ it('books real slots exactly once and rejects concurrent professional/member ove
       [dto.startAt, dto.professionalId],
     );
     expect(rows.rows[0].count).toBe('1');
+    const totals = await database.pool.query(
+      "SELECT (SELECT count(*) FROM booking_sessions) AS bookings, (SELECT count(*) FROM notifications WHERE type='session_booked') AS notifications",
+    );
+    expect(totals.rows[0].notifications).toBe(totals.rows[0].bookings);
     await expect(
       module
         .get(IdempotencyService)
@@ -218,6 +234,22 @@ it('books real slots exactly once and rejects concurrent professional/member ove
     const proToken = (
       await auth.login({ ...credentials, email: '2@example.test' })
     ).token;
+    const professionalNotifications = await api
+      .get('/api/v1/notifications')
+      .set('Authorization', 'Bearer ' + proToken)
+      .expect(200);
+    expect(professionalNotifications.body.items).toContainEqual(
+      expect.objectContaining({
+        type: 'session_booked',
+        sessionId: pair[0].body.id,
+        data: { participantName: 'Test', startAt: pair[0].body.startAt },
+      }),
+    );
+    const memberNotifications = await api
+      .get('/api/v1/notifications')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(memberNotifications.body.items).toEqual([]);
     const otherToken = (
       await auth.login({ ...credentials, email: '1@example.test' })
     ).token;

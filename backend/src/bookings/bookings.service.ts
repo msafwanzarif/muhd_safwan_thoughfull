@@ -18,7 +18,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { inArray } from 'drizzle-orm';
-import { users, bookingSessions } from '../database/schema';
+import { users, bookingSessions, notifications } from '../database/schema';
 import { SlotsService } from '../slots/slots.service';
 import { SessionUser } from '../common/decorators/current-user';
 import { IdempotencyService } from '../common/idempotency/idempotency.service';
@@ -205,6 +205,19 @@ export class BookingsService {
             .returning();
 
           await createReminderRecords(tx, booking);
+          const [actor] = await tx
+            .select({ name: users.name })
+            .from(users)
+            .where(eq(users.id, member.userId));
+          await tx.insert(notifications).values({
+            recipientId: booking.professionalId,
+            type: 'session_booked',
+            sessionId: booking.id,
+            data: {
+              participantName: actor.name,
+              startAt: booking.startAt.toISOString(),
+            },
+          });
 
           return {
             id: booking.id,

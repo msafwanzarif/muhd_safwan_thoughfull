@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { mockEmptyNotifications } from './helpers/notifications';
 
 test('filters and paginates with URL history, and recovers from empty and failed results', async ({
   page,
 }, info) => {
   const mobile = info.project.name === 'mobile';
+  await mockEmptyNotifications(page);
   const requests: URLSearchParams[] = [];
   let failNext = false;
   await page.route('**/api/v1/users/me', (route) =>
